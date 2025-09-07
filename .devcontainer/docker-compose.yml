@@ -1,0 +1,47 @@
+services:
+    app:
+        build:
+            context: ..
+            dockerfile: .devcontainer/Dockerfile
+        command: sleep infinity
+        env_file:
+            - .env
+        depends_on:
+            - db
+            - redis-cache
+            - redis-session
+        networks:
+            - weddingofrebeccaandpeter-dev
+
+    db:
+        image: postgres:14.4
+        restart: unless-stopped
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        environment:
+            POSTGRES_DB: weddingofrebeccaandpeter_dev
+            POSTGRES_USER: weddingofrebeccaandpeter
+            POSTGRES_PASSWORD: weddingofrebeccaandpeter_dev_password
+        ports:
+            - "5432:5432"
+        networks:
+            - weddingofrebeccaandpeter-dev
+
+    redis-cache:
+        image: redis:7.0.4
+        restart: unless-stopped
+        networks:
+            - weddingofrebeccaandpeter-dev
+
+    redis-session:
+        image: redis:7.0.4
+        restart: unless-stopped
+        networks:
+            - weddingofrebeccaandpeter-dev
+
+volumes:
+    postgres-data:
+
+networks:
+    weddingofrebeccaandpeter-dev:
+        driver: bridge

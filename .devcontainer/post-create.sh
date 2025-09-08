@@ -50,6 +50,7 @@ EOF
 fi
 
 echo "Installing frontend dependencies..."
+pnpm install
 cd /workspace/website && pnpm install
 
 # Wait for database to be ready using Python and psycopg2
@@ -204,7 +205,7 @@ fi
 bind "set completion-ignore-case on"
 bind "set show-all-if-ambiguous on"
 bind "set menu-complete-display-prefix on"
-# <<< fliplytics: bash-completion end <<<
+# <<< weddingofrebeccaandpeter: bash-completion end <<<
 EOF
 
 # ---- Generate completion scripts (guarded if tools exist) ----
@@ -242,7 +243,7 @@ fi
 ###############################################################################
 # Starship prompt (emoji-free, shows venv + git) — idempotent
 ###############################################################################
-STARSHIP_LINE="# >>> fliplytics: starship init >>>"
+STARSHIP_LINE="# >>> weddingofrebeccaandpeter: starship init >>>"
 if ! grep -qF "$STARSHIP_LINE" "$BASHRC" 2>/dev/null; then
 	# Init starship in bash
 	cat >>"$BASHRC" <<'EOF'

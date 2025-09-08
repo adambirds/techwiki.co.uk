@@ -110,11 +110,11 @@ Pre-configured debug configurations:
 
 When the devcontainer is running, access these services:
 
-| Service                     | URL                          | Description                   |
-| --------------------------- | ---------------------------- | ----------------------------- |
-| Django Backend              | http://localhost:8000        | Main API and admin            |
-| Django Admin                | http://localhost:8000/admin/ | Admin interface (admin/admin) |
-| Website (Next.js)           | http://localhost:3000        | website / Frontend            |
+| Service           | URL                          | Description                   |
+| ----------------- | ---------------------------- | ----------------------------- |
+| Django Backend    | http://localhost:8000        | Main API and admin            |
+| Django Admin      | http://localhost:8000/admin/ | Admin interface (admin/admin) |
+| Website (Next.js) | http://localhost:3000        | website / Frontend            |
 
 ## 🗄️ Database
 
@@ -123,7 +123,6 @@ When the devcontainer is running, access these services:
 - **Database**: weddingofrebeccaandpeter_dev
 - **Username**: weddingofrebeccaandpeter
 - **Password**: weddingofrebeccaandpeter_dev_password
-
 
 ## 📦 Environment Variables
 
@@ -174,7 +173,7 @@ Modify `.devcontainer/post-create.sh` to add custom setup steps.
 ### Database Connection Issues
 
 1. Wait for database to be ready (check Docker logs)
-3. Check environment variables in `.devcontainer/.env`
+2. Check environment variables in `.devcontainer/.env`
 
 ### Environment Variable Issues
 

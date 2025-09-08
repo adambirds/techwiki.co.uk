@@ -31,6 +31,6 @@
             "django": true,
             "justMyCode": true,
             "python": "/opt/venv/bin/python"
-        },
+        }
     ]
 }

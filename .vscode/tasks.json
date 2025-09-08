@@ -104,10 +104,7 @@
         },
         {
             "label": "Test All",
-            "dependsOn": [
-                "Test Backend",
-                "Test Website",
-            ],
+            "dependsOn": ["Test Backend", "Test Website"],
             "dependsOrder": "parallel",
             "group": "test"
         },
@@ -136,6 +133,6 @@
                 "panel": "shared",
                 "showReuseMessage": true
             }
-        },
+        }
     ]
 }

@@ -1,4 +1,4 @@
-name: FlipLytics Backend CI (Monorepo)
+name: Wedding of Rebecca and Peter Backend CI (Monorepo)
 
 on:
     push:

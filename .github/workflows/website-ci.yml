@@ -1,4 +1,4 @@
-name: FlipLytics Website CI (Monorepo)
+name: Wedding of Rebecca and Peter Website CI (Monorepo)
 
 on:
     push:
@@ -69,7 +69,6 @@ jobs:
             - name: Install website Node deps
               working-directory: website
               run: pnpm install --frozen-lockfile
-
 
             - name: Add node bin paths to PATH
               run: |

@@ -11,8 +11,8 @@ from django.urls import path
 
 # These imports execute the patching and make the middleware available.
 # The 'noqa' comment prevents linters from flagging them as unused.
-import weddingofrebeccanadpeter.asgi_handler_logging  # noqa: F401
-from weddingofrebeccanadpeter.asgi_middleware import GraphQL400LoggerMiddleware
+import weddingofrebeccaandpeter.asgi_handler_logging  # noqa: F401
+from weddingofrebeccaandpeter.asgi_middleware import GraphQL400LoggerMiddleware
 
 logger = logging.getLogger(__name__)
 

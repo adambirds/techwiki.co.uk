@@ -180,9 +180,11 @@ jobs:
               run: |
                   {
                     echo "NEXT_PUBLIC_GTM_ID=${NEXT_PUBLIC_GTM_ID}";
+                    echo "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}";
                   } > ./website/.ci.env
               env:
                   NEXT_PUBLIC_GTM_ID: ${{ secrets.NEXT_PUBLIC_GTM_ID }}
+                  NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
             - name: Log in to DigitalOcean Container Registry
               run: echo "${{ secrets.DO_REGISTRY_ACCESS_TOKEN }}" | docker login -u ${{ secrets.DO_REGISTRY_USERNAME }} --password-stdin registry.digitalocean.com

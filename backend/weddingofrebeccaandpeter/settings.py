@@ -59,6 +59,9 @@ else:
     ]
 
 
+WEDDING_PHOTO_UPLOAD_PASSWORD = os.environ.get("WEDDING_PHOTO_UPLOAD_PASSWORD", None)
+
+
 # Application definition
 
 INSTALLED_APPS = [

@@ -166,8 +166,8 @@ cython_debug/
 #Exclude node_modules
 node_modules/
 
-media/*
-!media/__init__.py
+backend/media/*
+!backend/media/__init__.py
 
 celerybeat-schedule.db
 

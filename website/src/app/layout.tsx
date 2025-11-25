@@ -19,7 +19,7 @@ export default async function RootLayout({
                     content="picture-in-picture '*'"
                 />
             </head>
-            <body className="h-full bg-white">{children}</body>
+            <body className="h-full bg-[#1c324a]">{children}</body>
         </html>
     );
 }

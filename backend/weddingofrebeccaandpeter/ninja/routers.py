@@ -5,6 +5,7 @@ from ninja import NinjaAPI
 from ninja.errors import HttpError
 from pydantic import ValidationError
 
+from apps.wedding.ninja import guestbook_router, photos_router
 from authentication.ninja.views import auth_router
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,8 @@ api = NinjaAPI(
 
 # Register nested routers
 api.add_router("/auth", auth_router)
+api.add_router("/photos", photos_router)
+api.add_router("/guestbook", guestbook_router)
 
 
 @api.exception_handler(ValidationError)

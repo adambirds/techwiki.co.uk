@@ -10,6 +10,18 @@ const nextConfig = {
                 port: "",
                 pathname: "/vi/**",
             },
+            {
+                protocol: "http",
+                hostname: "localhost",
+                port: "8000",
+                pathname: "/media/**",
+            },
+            {
+                protocol: "https",
+                hostname: "api.weddingofrebeccaandpeter.co.uk",
+                port: "",
+                pathname: "/media/**",
+            },
         ],
     },
 };

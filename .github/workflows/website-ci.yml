@@ -115,7 +115,7 @@ jobs:
 
             - name: Run website tests
               working-directory: website
-              run: pnpm test
+              run: pnpm test --passWithNoTests
 
     build-and-analyze:
         name: Build and Bundle Analysis

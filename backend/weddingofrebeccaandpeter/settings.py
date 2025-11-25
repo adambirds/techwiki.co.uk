@@ -14,7 +14,6 @@ import base64
 import binascii
 import logging
 import os
-import urllib.parse
 from pathlib import Path
 
 import django_stubs_ext
@@ -154,6 +153,7 @@ DATABASES = {
     }
 }
 
+
 # We need to check if the below settings are base64 encoded and if so, decode them. If already decoded, we can use them as is.
 def decode_base64(value: str) -> str:
     try:
@@ -161,6 +161,7 @@ def decode_base64(value: str) -> str:
         return decoded_value
     except (binascii.Error, UnicodeDecodeError):
         return value
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

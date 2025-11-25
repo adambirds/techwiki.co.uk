@@ -7,7 +7,6 @@ from pathlib import Path
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
-from django.urls import path
 
 # These imports execute the patching and make the middleware available.
 # The 'noqa' comment prevents linters from flagging them as unused.

@@ -101,22 +101,19 @@ export default function ImageCropper({
                         </DialogTitle>
 
                         <div className="relative h-[300px] w-full bg-gray-900 sm:h-[400px]">
-                            {isOpen && (
-                                <Cropper
-                                    image={image}
-                                    crop={crop}
-                                    zoom={zoom}
-                                    rotation={rotation}
-                                    aspect={aspect}
-                                    onCropChange={setCrop}
-                                    onCropComplete={onCropComplete}
-                                    onZoomChange={setZoom}
-                                    onRotationChange={setRotation}
-                                    showGrid={true}
-                                    zoomWithScroll={true}
-                                    transform={`translate(${crop.x}px, ${crop.y}px) rotate(${rotation}deg) scale(${zoom}) ${flipHorizontal ? "scaleX(-1)" : ""} ${flipVertical ? "scaleY(-1)" : ""}`}
-                                />
-                            )}
+                            <Cropper
+                                image={image}
+                                crop={crop}
+                                zoom={zoom}
+                                rotation={rotation}
+                                aspect={aspect}
+                                onCropChange={setCrop}
+                                onCropComplete={onCropComplete}
+                                onZoomChange={setZoom}
+                                onRotationChange={setRotation}
+                                showGrid={true}
+                                zoomWithScroll={true}
+                            />
                         </div>
 
                         <div className="mt-4 max-h-[40vh] space-y-4 overflow-y-auto sm:mt-6 sm:max-h-none sm:space-y-6 sm:overflow-y-visible">

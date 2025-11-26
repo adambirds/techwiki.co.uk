@@ -3,11 +3,13 @@ name: Deploy Full Stack to Production
 on:
     push:
         branches: [deploy]
+    workflow_dispatch:
 
 jobs:
     deploy:
         name: Deploy Full Stack to Production
         runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/deploy'
         container:
             image: adbsoftwaresolutions/ansible-runner:latest
             options: --user root

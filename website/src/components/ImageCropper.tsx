@@ -101,19 +101,27 @@ export default function ImageCropper({
                         </DialogTitle>
 
                         <div className="relative h-[300px] w-full bg-gray-900 sm:h-[400px]">
-                            <Cropper
-                                image={image}
-                                crop={crop}
-                                zoom={zoom}
-                                rotation={rotation}
-                                aspect={aspect}
-                                onCropChange={setCrop}
-                                onCropComplete={onCropComplete}
-                                onZoomChange={setZoom}
-                                onRotationChange={setRotation}
-                                showGrid={true}
-                                zoomWithScroll={true}
-                            />
+                            <div
+                                style={{
+                                    transform: `scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`,
+                                    width: "100%",
+                                    height: "100%",
+                                }}
+                            >
+                                <Cropper
+                                    image={image}
+                                    crop={crop}
+                                    zoom={zoom}
+                                    rotation={rotation}
+                                    aspect={aspect}
+                                    onCropChange={setCrop}
+                                    onCropComplete={onCropComplete}
+                                    onZoomChange={setZoom}
+                                    onRotationChange={setRotation}
+                                    showGrid={true}
+                                    zoomWithScroll={true}
+                                />
+                            </div>
                         </div>
 
                         <div className="mt-4 max-h-[40vh] space-y-4 overflow-y-auto sm:mt-6 sm:max-h-none sm:space-y-6 sm:overflow-y-visible">

@@ -83,12 +83,12 @@ UNFOLD = {
     "SITE_TITLE": "Wedding of Rebecca and Peter Admin",
     "SITE_HEADER": "Wedding of Rebecca and Peter Admin",
     "SITE_ICON": {
-        "light": lambda request: static("logo.svg"),
-        "dark": lambda request: static("logo-dark.svg"),
+        "light": lambda request: static("logo.png"),
+        "dark": lambda request: static("logo-dark.png"),
     },
     "SITE_LOGO": {
-        "light": lambda request: static("logo.svg"),
-        "dark": lambda request: static("logo-dark.svg"),
+        "light": lambda request: static("logo.png"),
+        "dark": lambda request: static("logo-dark.png"),
     },
 }
 

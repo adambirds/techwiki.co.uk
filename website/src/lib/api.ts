@@ -159,23 +159,19 @@ export async function getPhotoCount(): Promise<number> {
  * Get CSRF token by making a request to the API
  * This is needed before making any POST requests
  *
- * Note: Django Ninja sets the CSRF token automatically on the first request,
- * so we make a lightweight request to the photos/count endpoint instead of
- * a dedicated CSRF endpoint.
+ * Note: We use a dedicated /csrf endpoint that doesn't require CSRF validation
+ * for the initial request, which will set the CSRF cookie.
  */
 export async function initializeCsrf(): Promise<void> {
     try {
-        // Make a GET request to any endpoint to initialize the CSRF cookie
-        // Using /api/photos/count as it's a lightweight endpoint
-        await fetch(`${API_BASE_URL}/api/photos/count`, {
+        // Make a GET request to the CSRF endpoint to initialize the CSRF cookie
+        await fetch(`${API_BASE_URL}/api/csrf`, {
             credentials: "include",
         });
     } catch (error) {
         console.error("Failed to initialize CSRF token:", error);
     }
-}
-
-/**
+} /**
  * Create a guestbook message
  */
 export async function createGuestbookMessage(

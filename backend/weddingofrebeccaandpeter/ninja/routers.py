@@ -1,6 +1,6 @@
 import logging
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from ninja import NinjaAPI
@@ -27,14 +27,14 @@ api.add_router("/guestbook", guestbook_router)
 
 @api.get("/csrf", auth=None)
 @ensure_csrf_cookie
-def get_csrf_token(request: HttpRequest) -> dict[str, str]:
+def get_csrf_token(request: HttpRequest) -> JsonResponse:
     """Get CSRF token - this endpoint doesn't require CSRF validation.
 
     The @ensure_csrf_cookie decorator ensures the CSRF cookie is set in the response.
     """
     # This will set the CSRF cookie and return the token value
     token = get_token(request)
-    return {"csrf_token": token}
+    return JsonResponse({"csrf_token": token})
 
 
 @api.exception_handler(ValidationError)

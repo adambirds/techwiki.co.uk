@@ -164,23 +164,15 @@ export async function getPhotoCount(): Promise<number> {
  */
 export async function initializeCsrf(): Promise<void> {
     try {
-        // Make a GET request to the CSRF endpoint to get the CSRF token
-        const response = await fetch(`${API_BASE_URL}/api/csrf`, {
+        await fetch(`${API_BASE_URL}/api/csrf`, {
             credentials: "include",
         });
-
-        if (response.ok) {
-            const data = await response.json();
-            // Set the CSRF token as a cookie manually in case the Set-Cookie header
-            // doesn't work across domains
-            if (data.csrf_token) {
-                document.cookie = `csrftoken=${data.csrf_token}; path=/; SameSite=Lax; Secure`;
-            }
-        }
+        // Do NOT overwrite the cookie. Safari requires the original Django Set-Cookie header.
     } catch (error) {
         console.error("Failed to initialize CSRF token:", error);
     }
-} /**
+}
+/**
  * Create a guestbook message
  */
 export async function createGuestbookMessage(

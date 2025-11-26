@@ -164,10 +164,19 @@ export async function getPhotoCount(): Promise<number> {
  */
 export async function initializeCsrf(): Promise<void> {
     try {
-        // Make a GET request to the CSRF endpoint to initialize the CSRF cookie
-        await fetch(`${API_BASE_URL}/api/csrf`, {
+        // Make a GET request to the CSRF endpoint to get the CSRF token
+        const response = await fetch(`${API_BASE_URL}/api/csrf`, {
             credentials: "include",
         });
+
+        if (response.ok) {
+            const data = await response.json();
+            // Set the CSRF token as a cookie manually in case the Set-Cookie header
+            // doesn't work across domains
+            if (data.csrf_token) {
+                document.cookie = `csrftoken=${data.csrf_token}; path=/; SameSite=Lax; Secure`;
+            }
+        }
     } catch (error) {
         console.error("Failed to initialize CSRF token:", error);
     }

@@ -88,6 +88,50 @@ export interface Photo {
 }
 
 /**
+ * Video API types
+ */
+export interface Video {
+    id: number;
+    upload_id: string;
+    filename: string;
+    file_size: number;
+    duration_seconds: number | null;
+    thumbnail_url: string | null;
+    embed_url: string | null;
+    web_url: string | null;
+    status: "pending" | "uploading" | "processing" | "completed" | "failed";
+    uploaded_by: string;
+    uploaded_at: string;
+    is_playable: boolean;
+}
+
+export interface VideoUploadInitResponse {
+    upload_id: string;
+    upload_url: string;
+    chunk_size: number;
+    message: string;
+}
+
+export interface VideoUploadChunkResponse {
+    upload_id: string;
+    bytes_uploaded: number;
+    total_size: number;
+    progress: number;
+    is_complete: boolean;
+    message: string;
+}
+
+export interface VideoUploadStatusResponse {
+    upload_id: string;
+    status: string;
+    filename: string;
+    file_size: number;
+    bytes_uploaded: number;
+    progress: number;
+    error_message: string | null;
+}
+
+/**
  * Guestbook API types
  */
 export interface GuestbookMessage {
@@ -225,4 +269,179 @@ export async function updateGuestbookMessage(
         method: "PUT",
         data: { message, edit_token: editToken },
     });
+}
+
+// ============================================
+// Video Upload API
+// ============================================
+
+/**
+ * Initialize a video upload session
+ * This creates an upload session with the backend/OneDrive
+ */
+export async function initVideoUpload(
+    filename: string,
+    fileSize: number,
+    contentType: string,
+    uploadedBy: string,
+): Promise<VideoUploadInitResponse> {
+    return apiRequest<VideoUploadInitResponse>("/api/videos/init-upload", {
+        method: "POST",
+        data: {
+            filename,
+            file_size: fileSize,
+            content_type: contentType,
+            uploaded_by: uploadedBy,
+        },
+    });
+}
+
+/**
+ * Upload a chunk of a video file
+ */
+export async function uploadVideoChunk(
+    uploadId: string,
+    chunk: Blob,
+    startByte: number,
+    endByte: number,
+): Promise<VideoUploadChunkResponse> {
+    const formData = new FormData();
+    formData.append("file", chunk);
+    formData.append("start_byte", startByte.toString());
+    formData.append("end_byte", endByte.toString());
+
+    return apiRequest<VideoUploadChunkResponse>(
+        `/api/videos/${uploadId}/chunk`,
+        {
+            method: "POST",
+            formData,
+        },
+    );
+}
+
+/**
+ * Get the status of a video upload
+ */
+export async function getVideoUploadStatus(
+    uploadId: string,
+): Promise<VideoUploadStatusResponse> {
+    return apiRequest<VideoUploadStatusResponse>(
+        `/api/videos/${uploadId}/status`,
+        {
+            method: "GET",
+        },
+    );
+}
+
+/**
+ * Cancel a video upload
+ */
+export async function cancelVideoUpload(uploadId: string): Promise<void> {
+    await apiRequest<{ message: string }>(`/api/videos/${uploadId}/cancel`, {
+        method: "DELETE",
+    });
+}
+
+/**
+ * Get paginated videos
+ */
+export async function getVideos(
+    page: number = 1,
+    pageSize: number = 50,
+): Promise<Video[]> {
+    return apiRequest<Video[]>(
+        `/api/videos/list?page=${page}&page_size=${pageSize}`,
+        {
+            method: "GET",
+        },
+    );
+}
+
+/**
+ * Get total video count
+ */
+export async function getVideoCount(): Promise<number> {
+    const response = await apiRequest<{ total: number }>("/api/videos/count", {
+        method: "GET",
+    });
+    return response.total;
+}
+
+/**
+ * Get a single video by ID
+ */
+export async function getVideo(videoId: number): Promise<Video> {
+    return apiRequest<Video>(`/api/videos/${videoId}`, {
+        method: "GET",
+    });
+}
+
+/**
+ * Upload a video file in chunks with progress tracking
+ * This is a high-level function that handles the entire chunked upload process
+ */
+export async function uploadVideoWithProgress(
+    file: File,
+    uploadedBy: string,
+    onProgress?: (progress: number, bytesUploaded: number) => void,
+    onComplete?: (video: VideoUploadChunkResponse) => void,
+    onError?: (error: Error) => void,
+): Promise<VideoUploadChunkResponse> {
+    try {
+        // Initialize the upload session
+        const initResponse = await initVideoUpload(
+            file.name,
+            file.size,
+            file.type || "video/mp4",
+            uploadedBy,
+        );
+
+        const { upload_id, chunk_size } = initResponse;
+        let bytesUploaded = 0;
+
+        // Upload chunks
+        while (bytesUploaded < file.size) {
+            const startByte = bytesUploaded;
+            const endByte = Math.min(startByte + chunk_size, file.size);
+            const chunk = file.slice(startByte, endByte);
+
+            const chunkResponse = await uploadVideoChunk(
+                upload_id,
+                chunk,
+                startByte,
+                endByte,
+            );
+
+            bytesUploaded = chunkResponse.bytes_uploaded;
+
+            // Report progress
+            if (onProgress) {
+                onProgress(chunkResponse.progress, bytesUploaded);
+            }
+
+            // Check if complete
+            if (chunkResponse.is_complete) {
+                if (onComplete) {
+                    onComplete(chunkResponse);
+                }
+                return chunkResponse;
+            }
+        }
+
+        // Should not reach here, but return last status
+        const status = await getVideoUploadStatus(upload_id);
+        return {
+            upload_id: status.upload_id,
+            bytes_uploaded: status.bytes_uploaded,
+            total_size: status.file_size,
+            progress: status.progress,
+            is_complete: status.status === "completed",
+            message: "Upload completed",
+        };
+    } catch (error) {
+        if (onError) {
+            onError(error instanceof Error ? error : new Error(String(error)));
+        }
+        throw error;
+    }
 }

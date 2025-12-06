@@ -60,6 +60,16 @@ else:
 
 WEDDING_PHOTO_UPLOAD_PASSWORD = os.environ.get("WEDDING_PHOTO_UPLOAD_PASSWORD", None)
 
+# OneDrive/SharePoint configuration for video uploads
+# Register an Azure AD application with Files.ReadWrite.All permission
+ONEDRIVE_CLIENT_ID = os.environ.get("ONEDRIVE_CLIENT_ID", None)
+ONEDRIVE_CLIENT_SECRET = os.environ.get("ONEDRIVE_CLIENT_SECRET", None)
+ONEDRIVE_TENANT_ID = os.environ.get("ONEDRIVE_TENANT_ID", None)
+# For SharePoint, use the drive ID. For personal OneDrive, use 'me'
+ONEDRIVE_DRIVE_ID = os.environ.get("ONEDRIVE_DRIVE_ID", None)
+# Folder path in OneDrive where videos will be uploaded
+ONEDRIVE_FOLDER_PATH = os.environ.get("ONEDRIVE_FOLDER_PATH", "WeddingVideos")
+
 
 # Application definition
 

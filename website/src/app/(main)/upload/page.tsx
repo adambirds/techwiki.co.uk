@@ -1,14 +1,19 @@
 "use client";
 
+import MediaUpload from "@/components/MediaUpload";
 import NameInputModal from "@/components/NameInputModal";
 import PhotoGallery from "@/components/PhotoGallery";
-import PhotoUpload from "@/components/PhotoUpload";
+import VideoGallery from "@/components/VideoGallery";
 import {
     checkPassword,
     getPhotoCount,
     getPhotos,
+    getVideoCount,
+    getVideos,
     initializeCsrf,
     type Photo,
+    type Video,
+    type VideoUploadChunkResponse,
 } from "@/lib/api";
 import { COOKIE_NAMES, getCookie, setCookie } from "@/lib/cookies";
 import { Cormorant_Garamond } from "next/font/google";
@@ -31,10 +36,15 @@ function UploadPageContent() {
     const [showNameModal, setShowNameModal] = useState(false);
     const [guestName, setGuestName] = useState<string>("");
     const [photos, setPhotos] = useState<Photo[]>([]);
+    const [videos, setVideos] = useState<Video[]>([]);
     const [error, setError] = useState<string>("");
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPhotoPage, setCurrentPhotoPage] = useState(1);
+    const [currentVideoPage, setCurrentVideoPage] = useState(1);
     const [totalPhotos, setTotalPhotos] = useState(0);
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [totalVideos, setTotalVideos] = useState(0);
+    const [isLoadingMorePhotos, setIsLoadingMorePhotos] = useState(false);
+    const [isLoadingMoreVideos, setIsLoadingMoreVideos] = useState(false);
+    const [activeTab, setActiveTab] = useState<"photos" | "videos">("photos");
     const PAGE_SIZE = 50;
 
     useEffect(() => {
@@ -68,13 +78,18 @@ function UploadPageContent() {
                     setShowNameModal(true);
                 }
 
-                // Load existing photos
-                const [existingPhotos, photoCount] = await Promise.all([
-                    getPhotos(1, PAGE_SIZE),
-                    getPhotoCount(),
-                ]);
+                // Load existing photos and videos
+                const [existingPhotos, photoCount, existingVideos, videoCount] =
+                    await Promise.all([
+                        getPhotos(1, PAGE_SIZE),
+                        getPhotoCount(),
+                        getVideos(1, PAGE_SIZE),
+                        getVideoCount(),
+                    ]);
                 setPhotos(existingPhotos);
                 setTotalPhotos(photoCount);
+                setVideos(existingVideos);
+                setTotalVideos(videoCount);
             } catch (err) {
                 setError(
                     err instanceof Error ? err.message : "Failed to initialize",
@@ -98,21 +113,53 @@ function UploadPageContent() {
         setTotalPhotos((prev) => prev + 1);
     };
 
-    const handleLoadMore = async () => {
-        setIsLoadingMore(true);
+    const handleVideoUploaded = (response: VideoUploadChunkResponse) => {
+        // Video is uploaded but may still be processing
+        // Refresh the videos list after a short delay
+        setTimeout(async () => {
+            try {
+                const [updatedVideos, videoCount] = await Promise.all([
+                    getVideos(1, PAGE_SIZE),
+                    getVideoCount(),
+                ]);
+                setVideos(updatedVideos);
+                setTotalVideos(videoCount);
+            } catch (err) {
+                console.error("Failed to refresh videos:", err);
+            }
+        }, 2000);
+    };
+
+    const handleLoadMorePhotos = async () => {
+        setIsLoadingMorePhotos(true);
         try {
-            const nextPage = currentPage + 1;
+            const nextPage = currentPhotoPage + 1;
             const morePhotos = await getPhotos(nextPage, PAGE_SIZE);
             setPhotos((prev) => [...prev, ...morePhotos]);
-            setCurrentPage(nextPage);
+            setCurrentPhotoPage(nextPage);
         } catch (err) {
             console.error("Failed to load more photos:", err);
         } finally {
-            setIsLoadingMore(false);
+            setIsLoadingMorePhotos(false);
+        }
+    };
+
+    const handleLoadMoreVideos = async () => {
+        setIsLoadingMoreVideos(true);
+        try {
+            const nextPage = currentVideoPage + 1;
+            const moreVideos = await getVideos(nextPage, PAGE_SIZE);
+            setVideos((prev) => [...prev, ...moreVideos]);
+            setCurrentVideoPage(nextPage);
+        } catch (err) {
+            console.error("Failed to load more videos:", err);
+        } finally {
+            setIsLoadingMoreVideos(false);
         }
     };
 
     const hasMorePhotos = photos.length < totalPhotos;
+    const hasMoreVideos = videos.length < totalVideos;
 
     if (isLoading) {
         return (
@@ -195,38 +242,86 @@ function UploadPageContent() {
                         <div className="mb-12">
                             <div className="mb-4">
                                 <h2 className="text-xl font-semibold text-white">
-                                    Upload Your Photos
+                                    Share Your Memories
                                 </h2>
                                 <p className="text-sm text-gray-300">
-                                    Share the moments you captured from our
-                                    special day
+                                    Upload photos and videos from our special
+                                    day
                                 </p>
                             </div>
-                            <PhotoUpload
+                            <MediaUpload
                                 guestName={guestName}
                                 onPhotoUploaded={handlePhotoUploaded}
+                                onVideoUploaded={handleVideoUploaded}
                             />
                         </div>
                     )}
 
-                    {/* Gallery Section */}
+                    {/* Gallery Section with Tabs */}
                     <div>
-                        <div className="mb-4">
-                            <h2 className="text-xl font-semibold text-white">
-                                Photo Gallery
-                            </h2>
-                            <p className="text-sm text-gray-300">
-                                {totalPhotos}{" "}
-                                {totalPhotos === 1 ? "photo" : "photos"} shared
-                                by our guests
-                            </p>
+                        {/* Tab Navigation */}
+                        <div className="mb-6 border-b border-gray-700">
+                            <nav className="-mb-px flex space-x-8">
+                                <button
+                                    onClick={() => setActiveTab("photos")}
+                                    className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
+                                        activeTab === "photos"
+                                            ? "border-[#dab94d] text-[#dab94d]"
+                                            : "border-transparent text-gray-400 hover:border-gray-500 hover:text-gray-300"
+                                    }`}
+                                >
+                                    Photos ({totalPhotos})
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab("videos")}
+                                    className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
+                                        activeTab === "videos"
+                                            ? "border-[#dab94d] text-[#dab94d]"
+                                            : "border-transparent text-gray-400 hover:border-gray-500 hover:text-gray-300"
+                                    }`}
+                                >
+                                    Videos ({totalVideos})
+                                </button>
+                            </nav>
                         </div>
-                        <PhotoGallery
-                            photos={photos}
-                            onLoadMore={handleLoadMore}
-                            hasMore={hasMorePhotos}
-                            isLoading={isLoadingMore}
-                        />
+
+                        {/* Photo Gallery */}
+                        {activeTab === "photos" && (
+                            <div>
+                                <div className="mb-4">
+                                    <p className="text-sm text-gray-300">
+                                        {totalPhotos}{" "}
+                                        {totalPhotos === 1 ? "photo" : "photos"}{" "}
+                                        shared by our guests
+                                    </p>
+                                </div>
+                                <PhotoGallery
+                                    photos={photos}
+                                    onLoadMore={handleLoadMorePhotos}
+                                    hasMore={hasMorePhotos}
+                                    isLoading={isLoadingMorePhotos}
+                                />
+                            </div>
+                        )}
+
+                        {/* Video Gallery */}
+                        {activeTab === "videos" && (
+                            <div>
+                                <div className="mb-4">
+                                    <p className="text-sm text-gray-300">
+                                        {totalVideos}{" "}
+                                        {totalVideos === 1 ? "video" : "videos"}{" "}
+                                        shared by our guests
+                                    </p>
+                                </div>
+                                <VideoGallery
+                                    videos={videos}
+                                    onLoadMore={handleLoadMoreVideos}
+                                    hasMore={hasMoreVideos}
+                                    isLoading={isLoadingMoreVideos}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

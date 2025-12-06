@@ -53,8 +53,8 @@ def upload_photo(
             f"File type {file.content_type} not allowed. Allowed types: {', '.join(allowed_types)}",
         )
 
-    # Validate file size (max 10MB)
-    max_size = 10 * 1024 * 1024  # 10MB in bytes
+    # Validate file size (max 100MB)
+    max_size = 100 * 1024 * 1024  # 100MB in bytes
     if file.size and file.size > max_size:
         raise HttpError(400, "File size exceeds maximum allowed size of 10MB")
 

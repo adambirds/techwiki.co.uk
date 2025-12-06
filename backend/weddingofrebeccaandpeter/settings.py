@@ -262,6 +262,9 @@ SESSION_COOKIE_DOMAIN = "." + SITE_DOMAIN
 
 SESSION_CACHE_ALIAS = "session"
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",

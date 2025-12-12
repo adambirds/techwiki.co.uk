@@ -1,0 +1,17 @@
+Subject: Email Verification Successful
+
+Hi {{ user.first_name }},
+
+Thank you for verifying your email address! Your TechWiki account is now ready to use.
+
+You can get started here: https://techwiki.co.uk
+
+If you did not verify this email address, please contact our support team immediately.
+
+Best regards,
+The TechWiki Team
+
+---
+
+Visit us at: https://techwiki.co.uk
+

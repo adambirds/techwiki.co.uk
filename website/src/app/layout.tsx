@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "Wedding of Rebecca & Peter",
+    title: "Tech Wiki",
 };
 
 export default async function RootLayout({
@@ -27,10 +27,7 @@ export default async function RootLayout({
                     sizes="180x180"
                     href="/apple-touch-icon.png"
                 />
-                <meta
-                    name="apple-mobile-web-app-title"
-                    content="Wedding of Rebecca & Peter"
-                />
+                <meta name="apple-mobile-web-app-title" content="Tech Wiki" />
                 <link rel="manifest" href="/site.webmanifest" />
                 <meta
                     httpEquiv="Permissions-Policy"

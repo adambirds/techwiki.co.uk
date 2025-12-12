@@ -16,3 +16,6 @@ LOGGING = {
         "django": {"handlers": ["null"], "level": "DEBUG", "propagate": False},
     },
 }
+
+# Disable rate limiting in tests
+RATE_LIMIT_DISABLED = True

@@ -2,7 +2,7 @@ import fs from "fs";
 import type { MetadataRoute } from "next";
 import path from "path";
 
-const BASE_URL = "https://weddingofrebeccanadpeter.co.uk";
+const BASE_URL = "https://techwiki.co.uk";
 
 // Helper function to generate full path and get last modified date
 const getLastModified = (relativePath: string) => {

@@ -46,6 +46,7 @@ if DEBUG:
 SITE_DOMAIN = os.environ.get("SITE_DOMAIN", "localhost")
 
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+AUTH_FRONTEND_URL = os.environ.get("AUTH_FRONTEND_URL", "http://localhost:5174")
 
 if not SITE_DOMAIN:
     raise ValueError("SITE_DOMAIN must be set.")
@@ -74,7 +75,6 @@ ONEDRIVE_FOLDER_PATH = os.environ.get("ONEDRIVE_FOLDER_PATH", "WeddingVideos")
 # Application definition
 
 INSTALLED_APPS = [
-    
     "authentication",
     "corsheaders",
     "unfold",  # before django.contrib.admin
@@ -238,11 +238,14 @@ CSRF_COOKIE_DOMAIN = "." + SITE_DOMAIN if not DEBUG else None
 CORS_ALLOWED_ORIGINS = [
     "https://" + SITE_DOMAIN,
     "https://api." + SITE_DOMAIN,
+    "https://auth." + SITE_DOMAIN,
 ]
 
 if DEBUG:
     CORS_ALLOWED_ORIGINS += [
         "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5174",
     ]
 
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS

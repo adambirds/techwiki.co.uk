@@ -117,6 +117,35 @@ class User(AbstractBaseUser, PermissionsMixin):
         ),
     )
     date_joined = models.DateTimeField(verbose_name=_("date joined"), auto_now_add=True)
+    email_verified = models.BooleanField(
+        verbose_name=_("email verified"),
+        default=False,
+        help_text=_("Designates whether the user has verified their email address."),
+    )
+    verification_token = models.UUIDField(
+        verbose_name=_("verification token"),
+        default=uuid.uuid4,
+        editable=False,
+    )
+    last_verification_email_sent = models.DateTimeField(
+        verbose_name=_("last verification email sent"),
+        null=True,
+        blank=True,
+    )
+    password_reset_token = models.UUIDField(
+        verbose_name=_("password reset token"),
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    password_reset_token_created = models.DateTimeField(
+        verbose_name=_("password reset token created"),
+        null=True,
+        blank=True,
+    )
+    ebay_account_not_yet_linked_email_sent = models.BooleanField(
+        default=False, verbose_name="Ebay Account Not Yet Linked Email Sent"
+    )
 
     objects = UserManager()
 
@@ -150,6 +179,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     ) -> None:
         send_mail(subject, message, from_email, [self.email], **kwargs)
 
+    def generate_verification_token(self) -> uuid.UUID:
+        verification_token = uuid.uuid4()
+        return verification_token
+
 
 class CustomGroup(Group):
     class Meta:
@@ -157,3 +190,17 @@ class CustomGroup(Group):
         app_label = "authentication"
         verbose_name = _("group")
         verbose_name_plural = _("groups")
+
+
+# Import passkey models so they are registered with Django
+from authentication.passkeys.models import Passkey, PasskeyChallenge  # noqa: F401
+
+# Import 2FA models so they are registered with Django
+from authentication.twofactor.models import (  # noqa: F401
+    RecoveryCode,
+    TwoFactorChallenge,
+    TwoFactorMethod,
+)
+
+# Import session models so they are registered with Django
+from authentication.sessions.models import UserSession  # noqa: F401

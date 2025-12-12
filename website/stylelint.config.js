@@ -53,4 +53,5 @@ module.exports = {
         "function-url-no-scheme-relative": true,
         "function-url-scheme-allowed-list": ["data"],
     },
+    ignoreFiles: ["dist/**", "node_modules/**"],
 };

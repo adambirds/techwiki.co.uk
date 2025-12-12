@@ -16,10 +16,14 @@ from authentication.ninja.schemas import (
     StatusResponse,
     UserResponse,
 )
+from authentication.passkeys.security_logs_views import security_logs_router
 
 logger = logging.getLogger(__name__)
 
 auth_router = Router(tags=["auth"])
+
+# Add security logs routes
+auth_router.add_router("/security-logs", security_logs_router)
 
 
 def transform_user_to_response(user: User) -> UserResponse:
@@ -56,7 +60,7 @@ def get_csrf_token(request: HttpRequest) -> tuple[int, dict[str, Any]]:
 @auth_router.post(
     "/login",
     response={
-        200: AuthResponse,
+        200: dict,
         401: ProblemDetail,
         403: ProblemDetail,
         500: ProblemDetail,
@@ -64,11 +68,13 @@ def get_csrf_token(request: HttpRequest) -> tuple[int, dict[str, Any]]:
 )
 def login_user(request: HttpRequest, login_data: LoginRequest) -> tuple[int, dict[str, Any]]:
     """
-    200: success
+    200: success (or 2FA required)
     401: invalid credentials
     403: authenticated but not staff/superuser
     500: server error
     """
+    from authentication.twofactor.utils import create_2fa_challenge, is_2fa_enabled
+
     try:
         user = authenticate(request, username=login_data.email, password=login_data.password)
         if user is None:
@@ -85,12 +91,24 @@ def login_user(request: HttpRequest, login_data: LoginRequest) -> tuple[int, dic
                 "code": "forbidden",
             }
 
+        # Check if 2FA is enabled
+        if is_2fa_enabled(user):
+            # Create a 2FA challenge instead of logging in
+            token = create_2fa_challenge(user, request)
+            return 200, {
+                "success": True,
+                "requires_2fa": True,
+                "challenge_token": token,
+                "message": "Two-factor authentication is required",
+            }
+
         login(request, user)
         get_token(request)  # rotate/ensure CSRF with new session
         return 200, {
             "user": transform_user_to_response(user),
             "message": "Login successful",
             "success": True,
+            "requires_2fa": False,
         }
 
     except Exception as e:

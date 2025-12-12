@@ -2,7 +2,7 @@
  * Utility for generating canonical URLs for the website
  */
 
-const BASE_URL = "https://weddingofrebeccanadpeter.co.uk";
+const BASE_URL = "https://techwiki.co.uk";
 
 /**
  * Generate a canonical URL for the given path

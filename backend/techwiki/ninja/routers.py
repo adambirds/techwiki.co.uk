@@ -7,23 +7,23 @@ from ninja import NinjaAPI
 from ninja.errors import HttpError
 from pydantic import ValidationError
 
-from apps.wedding.ninja import guestbook_router, photos_router, videos_router
+from authentication.auth_service.views import auth_service_router
 from authentication.ninja.views import auth_router
+from authentication.sessions.views import sessions_router
 
 logger = logging.getLogger(__name__)
 
 api = NinjaAPI(
-    title="Wedding of Rebecca and Peter API",
+    title="TechWiki API",
     version="1.0",
-    description="API for the Wedding of Rebecca and Peter website",
+    description="API for the TechWiki authentication and services",
     csrf=True,
 )
 
 # Register nested routers
-api.add_router("/auth", auth_router)
-api.add_router("/photos", photos_router)
-api.add_router("/guestbook", guestbook_router)
-api.add_router("/videos", videos_router)
+api.add_router("/auth", auth_router)  # Admin auth (staff/superuser only)
+api.add_router("/auth-service", auth_service_router)  # User auth (registration, login, 2FA, etc.)
+api.add_router("/sessions", sessions_router)  # Session/device management
 
 
 @api.get("/csrf", auth=None)

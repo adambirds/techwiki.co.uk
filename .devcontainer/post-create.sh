@@ -52,6 +52,7 @@ fi
 echo "Installing frontend dependencies..."
 pnpm install
 cd /workspace/website && pnpm install
+cd /workspace/auth-frontend && pnpm install
 
 # Wait for database to be ready using Python and psycopg2
 echo "Waiting for database to be ready..."
@@ -282,8 +283,10 @@ echo ""
 echo "Quick start commands:"
 echo "  Backend:         cd /workspace && python backend/manage.py runserver 0.0.0.0:8000"
 echo "  Website:         cd /workspace/website && pnpm dev"
+echo "  Auth Frontend:   cd /workspace/auth-frontend && pnpm dev"
 echo ""
 echo "Access URLs:"
 echo "  Django Admin:    http://localhost:8000/admin/ (admin/admin)"
 echo "  Website:         http://localhost:3000/"
+echo "  Auth Frontend:   http://localhost:5173/"
 echo ""

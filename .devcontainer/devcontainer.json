@@ -1,5 +1,5 @@
 {
-    "name": "weddingofrebeccaandpeter.co.uk Dev Container",
+    "name": "techwiki.co.uk Dev Container",
     "dockerComposeFile": ["docker-compose.yml"],
     "service": "app",
     "workspaceFolder": "/workspace",
@@ -121,7 +121,7 @@
     "mounts": [
         // Persistent Bash history (Docker volume mounted as a directory)
         // The history file will live at /root/.history/.bash_history
-        "source=weddingofrebeccaandpeter-bash-history,target=/root/.history,type=volume",
+        "source=techwiki-bash-history,target=/root/.history,type=volume",
 
         // Workspace
         "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",

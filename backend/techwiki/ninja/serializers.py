@@ -1,4 +1,4 @@
-from weddingofrebeccaandpeter.ninja.schema import Pagination
+from techwiki.ninja.schema import Pagination
 
 
 def serialize_pagination(

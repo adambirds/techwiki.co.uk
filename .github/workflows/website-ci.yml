@@ -148,7 +148,7 @@ jobs:
             # Upload bundle analysis to Codecov
             # https://docs.codecov.com/docs/javascript-bundle-analysis
             - name: Upload bundle analysis to Codecov
-              if: ${{ github.repository == 'adb-software-solutions/weddingofrebeccaandpeter.co.uk' }}
+              if: ${{ github.repository == 'adb-software-solutions/techwiki.co.uk' }}
               uses: codecov/codecov-action@v4
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
@@ -192,10 +192,10 @@ jobs:
               run: |
                   docker build \
                     -f Dockerfile.website \
-                    -t registry.digitalocean.com/adbsoftwaresolutions/weddingofrebeccaandpeter-website:${{ steps.meta.outputs.tag_suffix }} \
+                    -t registry.digitalocean.com/adbsoftwaresolutions/techwiki-website:${{ steps.meta.outputs.tag_suffix }} \
                     .
             - name: Push Docker Image
-              run: docker push registry.digitalocean.com/adbsoftwaresolutions/weddingofrebeccaandpeter-website:${{ steps.meta.outputs.tag_suffix }}
+              run: docker push registry.digitalocean.com/adbsoftwaresolutions/techwiki-website:${{ steps.meta.outputs.tag_suffix }}
 
     scan-docker-image:
         name: Trivy Image Scan (Website)
@@ -217,7 +217,7 @@ jobs:
               uses: aquasecurity/trivy-action@0.29.0
               with:
                   scan-type: image
-                  image-ref: registry.digitalocean.com/adbsoftwaresolutions/weddingofrebeccaandpeter-website:${{ steps.meta.outputs.tag_suffix }}
+                  image-ref: registry.digitalocean.com/adbsoftwaresolutions/techwiki-website:${{ steps.meta.outputs.tag_suffix }}
                   severity: HIGH,CRITICAL
                   output: trivy-image-scan.txt
               env:

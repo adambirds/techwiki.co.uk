@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Post-create script for weddingofrebeccaandpeter devcontainer
+# Post-create script for techwiki devcontainer
 set -Eeuo pipefail
 error_trap() {
 	local code=$?
@@ -16,7 +16,7 @@ export SHELL="${SHELL:-/bin/bash}"
 export PNPM_HOME="${PNPM_HOME:-/usr/local/share/pnpm}"
 export PATH="$PNPM_HOME:$PATH"
 
-echo "Setting up weddingofrebeccaandpeter development environment..."
+echo "Setting up techwiki development environment..."
 
 # Change to workspace directory
 cd /workspace
@@ -41,9 +41,9 @@ SECRET_KEY=dev-secret-key-for-devcontainer-please-change-in-production
 SMTP_ENCRYPTION_KEY=I_DmQkoiAXfmF31CN_6L1o6raLaVIMjczZ-1LLElrGw=
 
 SQL_ENGINE=django.db.backends.postgresql
-SQL_DATABASE=weddingofrebeccaandpeter_dev
-SQL_USER=weddingofrebeccaandpeter
-SQL_PASSWORD=weddingofrebeccaandpeter_dev_password
+SQL_DATABASE=techwiki_dev
+SQL_USER=techwiki
+SQL_PASSWORD=techwiki_dev_password
 SQL_HOST=db
 SQL_PORT=5432
 EOF
@@ -60,9 +60,9 @@ import sys
 import psycopg2
 try:
     psycopg2.connect(
-        dbname='weddingofrebeccaandpeter_dev',
-        user='weddingofrebeccaandpeter',
-        password='weddingofrebeccaandpeter_dev_password',
+        dbname='techwiki_dev',
+        user='techwiki',
+        password='techwiki_dev_password',
         host='db',
         port=5432,
     )
@@ -96,8 +96,8 @@ git config --global --add safe.directory /workspace
 # Bash prompt fix: ensure (venv) shows in every interactive bash in VS Code
 # We append to /root/.bashrc at the END (idempotently) so it runs after any PS1=
 ###############################################################################
-MARK_BEGIN="# >>> weddingofrebeccaandpeter: ensure (venv) prompt begin >>>"
-MARK_END="# <<< weddingofrebeccaandpeter: ensure (venv) prompt end <<<"
+MARK_BEGIN="# >>> techwiki: ensure (venv) prompt begin >>>"
+MARK_END="# <<< techwiki: ensure (venv) prompt end <<<"
 
 # Remove previous block if present (to keep idempotent on rebuilds)
 if grep -qF "$MARK_BEGIN" "$BASHRC" 2>/dev/null; then
@@ -110,7 +110,7 @@ fi
 
 # Append our guarded block
 cat >>"$BASHRC" <<'EOF'
-# >>> weddingofrebeccaandpeter: ensure (venv) prompt begin >>>
+# >>> techwiki: ensure (venv) prompt begin >>>
 # Always show (venv) in interactive bash shells and ensure /opt/venv is active.
 # Place this at the END so it runs after any PS1 reassignments in the file.
 if [ -n "$PS1" ]; then
@@ -123,7 +123,7 @@ if [ -n "$PS1" ]; then
     PS1="${VIRTUAL_ENV_PROMPT:-($(basename "$VIRTUAL_ENV")) }$PS1"
   fi
 fi
-# <<< weddingofrebeccaandpeter: ensure (venv) prompt end <<<
+# <<< techwiki: ensure (venv) prompt end <<<
 EOF
 
 ###############################################################################
@@ -134,8 +134,8 @@ EOF
 ###############################################################################
 HIST_DIR="/root/.history"
 HIST_FILE="${HIST_DIR}/.bash_history"
-HIST_BEGIN="# >>> weddingofrebeccaandpeter: persistent bash history begin >>>"
-HIST_END="# <<< weddingofrebeccaandpeter: persistent bash history end <<<"
+HIST_BEGIN="# >>> techwiki: persistent bash history begin >>>"
+HIST_END="# <<< techwiki: persistent bash history end <<<"
 
 # Ensure directory exists (volume mount) and file present
 mkdir -p "$HIST_DIR"
@@ -175,8 +175,8 @@ EOF
 # Bash completion (system + common CLIs) — idempotent
 ###############################################################################
 COMP_DIR="/etc/bash_completion.d"
-COMP_BEGIN="# >>> weddingofrebeccaandpeter: bash-completion begin >>>"
-COMP_END="# <<< weddingofrebeccaandpeter: bash-completion end <<<"
+COMP_BEGIN="# >>> techwiki: bash-completion begin >>>"
+COMP_END="# <<< techwiki: bash-completion end <<<"
 
 mkdir -p "$COMP_DIR"
 
@@ -191,7 +191,7 @@ fi
 
 # Append sourcing + QoL bindings at the very end (after PS1 edits)
 cat >>"$BASHRC" <<'EOF'
-# >>> weddingofrebeccaandpeter: bash-completion begin >>>
+# >>> techwiki: bash-completion begin >>>
 # Enable programmable completion
 if [ -n "$PS1" ]; then
   if [ -r /etc/profile.d/bash_completion.sh ]; then
@@ -205,7 +205,7 @@ fi
 bind "set completion-ignore-case on"
 bind "set show-all-if-ambiguous on"
 bind "set menu-complete-display-prefix on"
-# <<< weddingofrebeccaandpeter: bash-completion end <<<
+# <<< techwiki: bash-completion end <<<
 EOF
 
 # ---- Generate completion scripts (guarded if tools exist) ----
@@ -243,15 +243,15 @@ fi
 ###############################################################################
 # Starship prompt (emoji-free, shows venv + git) — idempotent
 ###############################################################################
-STARSHIP_LINE="# >>> weddingofrebeccaandpeter: starship init >>>"
+STARSHIP_LINE="# >>> techwiki: starship init >>>"
 if ! grep -qF "$STARSHIP_LINE" "$BASHRC" 2>/dev/null; then
 	# Init starship in bash
 	cat >>"$BASHRC" <<'EOF'
-# >>> weddingofrebeccaandpeter: starship init >>>
+# >>> techwiki: starship init >>>
 if command -v starship >/dev/null 2>&1; then
   eval "$(starship init bash)"
 fi
-# <<< weddingofrebeccaandpeter: starship init <<<
+# <<< techwiki: starship init <<<
 EOF
 fi
 

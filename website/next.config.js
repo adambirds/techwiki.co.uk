@@ -18,7 +18,7 @@ const nextConfig = {
             },
             {
                 protocol: "https",
-                hostname: "api.weddingofrebeccaandpeter.co.uk",
+                hostname: "api.techwiki.co.uk",
                 port: "",
                 pathname: "/media/**",
             },

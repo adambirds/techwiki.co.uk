@@ -10,12 +10,12 @@ from django.core.asgi import get_asgi_application
 
 # These imports execute the patching and make the middleware available.
 # The 'noqa' comment prevents linters from flagging them as unused.
-import weddingofrebeccaandpeter.asgi_handler_logging  # noqa: F401
-from weddingofrebeccaandpeter.asgi_middleware import GraphQL400LoggerMiddleware
+import techwiki.asgi_handler_logging  # noqa: F401
+from techwiki.asgi_middleware import GraphQL400LoggerMiddleware
 
 logger = logging.getLogger(__name__)
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "weddingofrebeccaandpeter.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "techwiki.settings")
 
 # Get the default Django ASGI application and wrap it with our logging middleware.
 django_asgi_app: GraphQL400LoggerMiddleware = GraphQL400LoggerMiddleware(get_asgi_application())
@@ -67,7 +67,7 @@ def lazy_setup() -> None:
     from starlette.staticfiles import StaticFiles
 
     # Create a temporary directory to collect static files for development serving.
-    static_root_dev = Path(tempfile.gettempdir()) / "weddingofrebeccaandpeter-dev-static"
+    static_root_dev = Path(tempfile.gettempdir()) / "techwiki-dev-static"
     if static_root_dev.exists():
         shutil.rmtree(static_root_dev)
     static_root_dev.mkdir(parents=True)

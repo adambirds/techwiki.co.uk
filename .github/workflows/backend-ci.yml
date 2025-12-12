@@ -36,7 +36,7 @@ jobs:
             postgres:
                 image: postgres:14.4
                 env:
-                    POSTGRES_DB: weddingofrebeccaandpeter_dev
+                    POSTGRES_DB: techwiki_dev
                     POSTGRES_USER: user
                     POSTGRES_PASSWORD: pass
                 ports: ["5432:5432"]
@@ -51,7 +51,7 @@ jobs:
 
         env:
             SQL_ENGINE: django.db.backends.postgresql
-            SQL_DATABASE: weddingofrebeccaandpeter_dev
+            SQL_DATABASE: techwiki_dev
             SQL_USER: user
             SQL_PASSWORD: pass
             SQL_HOST: localhost
@@ -111,7 +111,7 @@ jobs:
 
             - name: Run Django tests
               working-directory: backend
-              run: DJANGO_SETTINGS_MODULE=weddingofrebeccaandpeter.settings_test coverage run manage.py test -v 2
+              run: DJANGO_SETTINGS_MODULE=techwiki.settings_test coverage run manage.py test -v 2
 
             - name: Generate coverage file
               working-directory: backend
@@ -127,7 +127,7 @@ jobs:
               run: tools/lint
 
             - name: Upload coverage to Codecov
-              if: ${{ github.repository == 'adb-software-solutions/weddingofrebeccaandpeter.co.uk' && github.event_name == 'push' }}
+              if: ${{ github.repository == 'adb-software-solutions/techwiki.co.uk' && github.event_name == 'push' }}
               uses: codecov/codecov-action@v4
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
@@ -171,8 +171,8 @@ jobs:
               run: echo "${{ secrets.DO_REGISTRY_ACCESS_TOKEN }}" | docker login -u ${{ secrets.DO_REGISTRY_USERNAME }} --password-stdin registry.digitalocean.com
             - name: Build and push ${{ matrix.image }}
               run: |
-                  docker build -f Dockerfile.${{ matrix.image }} -t registry.digitalocean.com/adbsoftwaresolutions/weddingofrebeccaandpeter-${{ matrix.image }}:latest .
-                  docker push registry.digitalocean.com/adbsoftwaresolutions/weddingofrebeccaandpeter-${{ matrix.image }}:latest
+                  docker build -f Dockerfile.${{ matrix.image }} -t registry.digitalocean.com/adbsoftwaresolutions/techwiki-${{ matrix.image }}:latest .
+                  docker push registry.digitalocean.com/adbsoftwaresolutions/techwiki-${{ matrix.image }}:latest
 
     trivy-image-scan:
         name: Trivy Image Scan (Backend)
@@ -184,11 +184,11 @@ jobs:
                 image:
                     - backend
         steps:
-            - name: Scan registry.digitalocean.com/adbsoftwaresolutions/weddingofrebeccaandpeter-${{ matrix.image }}:latest
+            - name: Scan registry.digitalocean.com/adbsoftwaresolutions/techwiki-${{ matrix.image }}:latest
               uses: aquasecurity/trivy-action@0.29.0
               with:
                   scan-type: image
-                  image-ref: registry.digitalocean.com/adbsoftwaresolutions/weddingofrebeccaandpeter-${{ matrix.image }}:latest
+                  image-ref: registry.digitalocean.com/adbsoftwaresolutions/techwiki-${{ matrix.image }}:latest
                   severity: HIGH,CRITICAL
                   output: trivy-${{ matrix.image }}-scan.txt
               env:

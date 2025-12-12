@@ -119,7 +119,7 @@ extend-function-names = ["gettext_lazy"]
 split-on-trailing-comma = false
 
 [tool.django-stubs]
-django_settings_module = "weddingofrebeccaandpeter.settings"
+django_settings_module = "techwiki.settings"
 
 [tool.ruff.lint.per-file-ignores]
 "backend/apps/wedding/migrations/*" = ["PERF401"]

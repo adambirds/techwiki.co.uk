@@ -11,7 +11,7 @@ services:
             - redis-cache
             - redis-session
         networks:
-            - weddingofrebeccaandpeter-dev
+            - techwiki-dev
 
     db:
         image: postgres:14.4
@@ -19,29 +19,29 @@ services:
         volumes:
             - postgres-data:/var/lib/postgresql/data
         environment:
-            POSTGRES_DB: weddingofrebeccaandpeter_dev
-            POSTGRES_USER: weddingofrebeccaandpeter
-            POSTGRES_PASSWORD: weddingofrebeccaandpeter_dev_password
+            POSTGRES_DB: techwiki_dev
+            POSTGRES_USER: techwiki
+            POSTGRES_PASSWORD: techwiki_dev_password
         ports:
             - "5432:5432"
         networks:
-            - weddingofrebeccaandpeter-dev
+            - techwiki-dev
 
     redis-cache:
         image: redis:7.0.4
         restart: unless-stopped
         networks:
-            - weddingofrebeccaandpeter-dev
+            - techwiki-dev
 
     redis-session:
         image: redis:7.0.4
         restart: unless-stopped
         networks:
-            - weddingofrebeccaandpeter-dev
+            - techwiki-dev
 
 volumes:
     postgres-data:
 
 networks:
-    weddingofrebeccaandpeter-dev:
+    techwiki-dev:
         driver: bridge

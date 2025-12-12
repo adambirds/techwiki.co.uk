@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
             allow: "/",
             disallow: "",
         },
-        sitemap: "https://weddingofrebeccaandpeter.co.uk/sitemap.xml",
+        sitemap: "https://techwiki.co.uk/sitemap.xml",
     };
 }

@@ -1,6 +1,6 @@
-# Devcontainer Setup for weddingofrebeccaandpeter.co.uk
+# Devcontainer Setup for techwiki.co.uk
 
-This directory contains the devcontainer configuration for the weddingofrebeccaandpeter monorepo. The devcontainer provides a complete development environment with all necessary tools and services.
+This directory contains the devcontainer configuration for the techwiki monorepo. The devcontainer provides a complete development environment with all necessary tools and services.
 
 ## 🚀 Getting Started
 
@@ -27,14 +27,14 @@ The devcontainer will automatically:
 ## 📁 Planned Monorepo Structure
 
 ```
-weddingofrebeccaandpeter.co.uk/
+techwiki.co.uk/
 ├── .devcontainer/          # Devcontainer configuration
 ├── .git/                   # Git repository
 ├── .gitignore              # Root gitignore
 ├── backend/                # Django backend (current code)
 │   ├── .gitignore
 │   ├── apps/
-│   ├── weddingofrebeccaandpeter/
+│   ├── techwiki/
 │   └── ...
 ├── website/                # Website/Frontend (Next.js)
 │   ├── .gitignore
@@ -120,9 +120,9 @@ When the devcontainer is running, access these services:
 
 - **Host**: localhost
 - **Port**: 5432
-- **Database**: weddingofrebeccaandpeter_dev
-- **Username**: weddingofrebeccaandpeter
-- **Password**: weddingofrebeccaandpeter_dev_password
+- **Database**: techwiki_dev
+- **Username**: techwiki
+- **Password**: techwiki_dev_password
 
 ## 📦 Environment Variables
 

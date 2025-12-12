@@ -23,7 +23,7 @@ jobs:
             postgres:
                 image: postgres:14.4
                 env:
-                    POSTGRES_DB: weddingofrebeccaandpeter_dev
+                    POSTGRES_DB: techwiki_dev
                     POSTGRES_USER: user
                     POSTGRES_PASSWORD: pass
                 ports: ["5432:5432"]
@@ -38,7 +38,7 @@ jobs:
 
         env:
             SQL_ENGINE: django.db.backends.postgresql
-            SQL_DATABASE: weddingofrebeccaandpeter_dev
+            SQL_DATABASE: techwiki_dev
             SQL_USER: user
             SQL_PASSWORD: pass
             SQL_HOST: localhost

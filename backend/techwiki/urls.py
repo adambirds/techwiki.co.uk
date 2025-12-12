@@ -1,5 +1,5 @@
 """
-URL configuration for weddingofrebeccaandpeter.co.uk project.
+URL configuration for techwiki.co.uk project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.2/topics/http/urls/
@@ -22,7 +22,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from weddingofrebeccaandpeter.ninja.routers import api
+from techwiki.ninja.routers import api
 
 logger = logging.getLogger(__name__)
 

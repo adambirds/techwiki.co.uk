@@ -1,15 +1,15 @@
 """Models for TechWiki documentation and blog platform."""
 
+from __future__ import annotations
+
 import uuid
-from typing import TYPE_CHECKING
+from collections.abc import Iterable
 
 from django.conf import settings
 from django.db import models
+from django.db.models.base import ModelBase
 from django.utils import timezone
 from django.utils.text import slugify
-
-if TYPE_CHECKING:
-    from authentication.models import User
 
 
 class Category(models.Model):
@@ -39,10 +39,21 @@ class Category(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def save(self, *args, **kwargs):
+    def save(
+        self,
+        force_insert: bool | tuple[ModelBase, ...] = False,
+        force_update: bool = False,
+        using: str | None = None,
+        update_fields: Iterable[str] | None = None,
+    ) -> None:
         if not self.slug:
             self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
     @property
     def full_path(self) -> str:
@@ -82,16 +93,18 @@ class Article(models.Model):
     """Main article model for documentation and blog posts."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
+
     # Basic info
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, db_index=True)
     excerpt = models.TextField(blank=True, default="", help_text="Short summary for previews")
-    
+
     # Content
     content = models.TextField(help_text="Markdown content")
-    rendered_html = models.TextField(blank=True, default="", help_text="Pre-rendered HTML for performance")
-    
+    rendered_html = models.TextField(
+        blank=True, default="", help_text="Pre-rendered HTML for performance"
+    )
+
     # Classification
     article_type = models.CharField(
         max_length=20,
@@ -112,8 +125,10 @@ class Article(models.Model):
         related_name="all_articles",
         help_text="All categories this article belongs to",
     )
-    tags = models.ManyToManyField("Tag", blank=True, related_name="articles")
-    
+    tags: models.ManyToManyField[Tag, Article] = models.ManyToManyField(
+        "Tag", blank=True, related_name="articles"
+    )
+
     # Authorship
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -121,7 +136,7 @@ class Article(models.Model):
         null=True,
         related_name="articles",
     )
-    
+
     # Status and moderation
     status = models.CharField(
         max_length=20,
@@ -138,7 +153,7 @@ class Article(models.Model):
         related_name="moderated_articles",
     )
     moderated_at = models.DateTimeField(null=True, blank=True)
-    
+
     # SEO
     meta_title = models.CharField(max_length=60, blank=True, default="")
     meta_description = models.CharField(max_length=160, blank=True, default="")
@@ -149,17 +164,17 @@ class Article(models.Model):
         blank=True,
         related_name="+",
     )
-    
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     published_at = models.DateTimeField(null=True, blank=True, db_index=True)
-    
+
     # Tracking
     view_count = models.PositiveIntegerField(default=0)
     is_featured = models.BooleanField(default=False)
     allow_comments = models.BooleanField(default=True)
-    
+
     # Version control
     version = models.PositiveIntegerField(default=1)
 
@@ -175,15 +190,26 @@ class Article(models.Model):
     def __str__(self) -> str:
         return self.title
 
-    def save(self, *args, **kwargs):
+    def save(
+        self,
+        force_insert: bool | tuple[ModelBase, ...] = False,
+        force_update: bool = False,
+        using: str | None = None,
+        update_fields: Iterable[str] | None = None,
+    ) -> None:
         if not self.slug:
             self.slug = slugify(self.title)
-        
+
         # Auto-publish when status changes to published
         if self.status == ArticleStatus.PUBLISHED and not self.published_at:
             self.published_at = timezone.now()
-        
-        super().save(*args, **kwargs)
+
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
     @property
     def full_url(self) -> str:
@@ -238,10 +264,21 @@ class Tag(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def save(self, *args, **kwargs):
+    def save(
+        self,
+        force_insert: bool | tuple[ModelBase, ...] = False,
+        force_update: bool = False,
+        using: str | None = None,
+        update_fields: Iterable[str] | None = None,
+    ) -> None:
         if not self.slug:
             self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
 
 class ArticleImage(models.Model):
@@ -283,7 +320,9 @@ class Redirect(models.Model):
     """URL redirects for old MediaWiki URLs and other legacy paths."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    old_path = models.CharField(max_length=500, unique=True, db_index=True, help_text="Old URL path (without domain)")
+    old_path = models.CharField(
+        max_length=500, unique=True, db_index=True, help_text="Old URL path (without domain)"
+    )
     new_path = models.CharField(max_length=500, help_text="New URL path")
     is_permanent = models.BooleanField(default=True, help_text="301 (permanent) vs 302 (temporary)")
     hit_count = models.PositiveIntegerField(default=0)
@@ -297,7 +336,7 @@ class Redirect(models.Model):
     def __str__(self) -> str:
         return f"{self.old_path} → {self.new_path}"
 
-    def record_hit(self):
+    def record_hit(self) -> None:
         """Record a redirect hit."""
         self.hit_count += 1
         self.last_hit = timezone.now()
@@ -330,12 +369,9 @@ class WikiUserProfile(models.Model):
     bio = models.TextField(blank=True, default="")
     website = models.URLField(blank=True, default="", help_text="Personal website or blog")
     photo = models.ImageField(
-        upload_to="profile_photos/%Y/%m/",
-        blank=True,
-        null=True,
-        help_text="User profile photo"
+        upload_to="profile_photos/%Y/%m/", blank=True, null=True, help_text="User profile photo"
     )
-    
+
     # Social Media & Professional Links
     github = models.URLField(blank=True, default="", help_text="GitHub profile URL")
     twitter = models.URLField(blank=True, default="", help_text="X (formerly Twitter) profile URL")
@@ -347,7 +383,7 @@ class WikiUserProfile(models.Model):
     stackoverflow = models.URLField(blank=True, default="", help_text="Stack Overflow profile URL")
     youtube = models.URLField(blank=True, default="", help_text="YouTube channel URL")
     twitch = models.URLField(blank=True, default="", help_text="Twitch channel URL")
-    
+
     is_trusted = models.BooleanField(
         default=False,
         help_text="Trusted contributors can publish without moderation",

@@ -1,17 +1,18 @@
 from django.contrib import admin
+
 from .models import (
-    PageView,
     ArticleView,
-    SearchQuery,
-    Event,
     DailyStats,
+    Event,
+    PageView,
+    SearchQuery,
     TopArticle,
     TopSearchQuery,
 )
 
 
 @admin.register(PageView)
-class PageViewAdmin(admin.ModelAdmin):
+class PageViewAdmin(admin.ModelAdmin[PageView]):
     list_display = ["path", "user", "device_type", "browser", "created_at"]
     list_filter = ["device_type", "browser", "created_at"]
     search_fields = ["path", "user__email", "session_id"]
@@ -20,7 +21,7 @@ class PageViewAdmin(admin.ModelAdmin):
 
 
 @admin.register(ArticleView)
-class ArticleViewAdmin(admin.ModelAdmin):
+class ArticleViewAdmin(admin.ModelAdmin[ArticleView]):
     list_display = ["article", "user", "time_on_article", "scroll_depth", "created_at"]
     list_filter = ["created_at"]
     search_fields = ["article__title", "user__email"]
@@ -29,7 +30,7 @@ class ArticleViewAdmin(admin.ModelAdmin):
 
 
 @admin.register(SearchQuery)
-class SearchQueryAdmin(admin.ModelAdmin):
+class SearchQueryAdmin(admin.ModelAdmin[SearchQuery]):
     list_display = ["query", "results_count", "clicked_result", "user", "created_at"]
     list_filter = ["created_at", "category_filter", "type_filter"]
     search_fields = ["query", "user__email"]
@@ -38,7 +39,7 @@ class SearchQueryAdmin(admin.ModelAdmin):
 
 
 @admin.register(Event)
-class EventAdmin(admin.ModelAdmin):
+class EventAdmin(admin.ModelAdmin[Event]):
     list_display = [
         "event_type",
         "event_action",
@@ -54,7 +55,7 @@ class EventAdmin(admin.ModelAdmin):
 
 
 @admin.register(DailyStats)
-class DailyStatsAdmin(admin.ModelAdmin):
+class DailyStatsAdmin(admin.ModelAdmin[DailyStats]):
     list_display = [
         "date",
         "total_page_views",
@@ -69,7 +70,7 @@ class DailyStatsAdmin(admin.ModelAdmin):
 
 
 @admin.register(TopArticle)
-class TopArticleAdmin(admin.ModelAdmin):
+class TopArticleAdmin(admin.ModelAdmin[TopArticle]):
     list_display = ["date", "period", "rank", "article", "view_count", "unique_visitors"]
     list_filter = ["period", "date"]
     search_fields = ["article__title"]
@@ -77,7 +78,7 @@ class TopArticleAdmin(admin.ModelAdmin):
 
 
 @admin.register(TopSearchQuery)
-class TopSearchQueryAdmin(admin.ModelAdmin):
+class TopSearchQueryAdmin(admin.ModelAdmin[TopSearchQuery]):
     list_display = ["date", "period", "rank", "query", "search_count", "click_through_rate"]
     list_filter = ["period", "date"]
     search_fields = ["query"]

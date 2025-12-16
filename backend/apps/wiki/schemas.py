@@ -1,11 +1,8 @@
 """Pydantic schemas for TechWiki API."""
 
 from datetime import datetime
-from typing import Optional
 
 from ninja import Schema
-from pydantic import Field
-
 
 # ============================================================================
 # Category Schemas
@@ -22,7 +19,7 @@ class CategoryBase(Schema):
 
 class CategoryResponse(CategoryBase):
     id: str
-    parent_id: Optional[str] = None
+    parent_id: str | None = None
     is_active: bool
     article_count: int
     full_path: str
@@ -90,7 +87,7 @@ class ArticleBase(Schema):
     excerpt: str = ""
     content: str
     article_type: str = "documentation"
-    category_id: Optional[str] = None  # Primary category for URL generation
+    category_id: str | None = None  # Primary category for URL generation
     category_ids: list[str] = []  # All categories
     tag_ids: list[str] = []
     meta_title: str = ""
@@ -103,17 +100,17 @@ class ArticleCreateRequest(ArticleBase):
 
 
 class ArticleUpdateRequest(Schema):
-    title: Optional[str] = None
-    slug: Optional[str] = None
-    excerpt: Optional[str] = None
-    content: Optional[str] = None
-    article_type: Optional[str] = None
-    category_id: Optional[str] = None  # Primary category
-    category_ids: Optional[list[str]] = None  # All categories
-    tag_ids: Optional[list[str]] = None
-    meta_title: Optional[str] = None
-    meta_description: Optional[str] = None
-    allow_comments: Optional[bool] = None
+    title: str | None = None
+    slug: str | None = None
+    excerpt: str | None = None
+    content: str | None = None
+    article_type: str | None = None
+    category_id: str | None = None  # Primary category
+    category_ids: list[str] | None = None  # All categories
+    tag_ids: list[str] | None = None
+    meta_title: str | None = None
+    meta_description: str | None = None
+    allow_comments: bool | None = None
     change_summary: str = ""
 
 
@@ -123,16 +120,16 @@ class ArticleSummary(Schema):
     slug: str
     excerpt: str
     article_type: str
-    category: Optional[CategoryResponse] = None
-    author: Optional[AuthorResponse] = None
+    category: CategoryResponse | None = None
+    author: AuthorResponse | None = None
     status: str
-    published_at: Optional[datetime] = None
+    published_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
     view_count: int
     reading_time: int
     is_featured: bool
-    featured_image_url: Optional[str] = None
+    featured_image_url: str | None = None
 
 
 class ArticleResponse(ArticleSummary):
@@ -175,7 +172,7 @@ class ImageUploadResponse(Schema):
 
 class ImageListResponse(Schema):
     success: bool
-    images: list[dict]
+    images: list[dict[str, str]]
 
 
 # ============================================================================
@@ -189,7 +186,7 @@ class RedirectRequest(Schema):
 
 class RedirectResponse(Schema):
     success: bool
-    redirect_to: Optional[str] = None
+    redirect_to: str | None = None
     is_permanent: bool = True
     message: str = ""
 
@@ -208,8 +205,8 @@ class RedirectCreateRequest(Schema):
 
 class SearchRequest(Schema):
     query: str
-    category: Optional[str] = None
-    article_type: Optional[str] = None
+    category: str | None = None
+    article_type: str | None = None
     tags: list[str] = []
     page: int = 1
     per_page: int = 20
@@ -277,7 +274,7 @@ class WikiUserProfileResponse(Schema):
     role: str
     bio: str
     website: str
-    photo: Optional[str] = None
+    photo: str | None = None
     github: str
     twitter: str
     bluesky: str = ""
@@ -315,7 +312,7 @@ class WikiUserProfileUpdateRequest(Schema):
 
 class UserProfileResponse(Schema):
     success: bool
-    user: Optional[WikiUserProfileResponse] = None
+    user: WikiUserProfileResponse | None = None
     message: str = ""
 
 

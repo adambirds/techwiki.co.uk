@@ -15,7 +15,7 @@ from authentication.types import UserType
 
 logger = logging.getLogger(__name__)
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+stripe.api_key = getattr(settings, "STRIPE_SECRET_KEY", "")
 
 
 class AdminLoginMutation(graphene.Mutation):

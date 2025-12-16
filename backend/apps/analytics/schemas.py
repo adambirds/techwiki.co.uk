@@ -1,32 +1,32 @@
 """Pydantic schemas for Analytics API."""
 
-from datetime import date, datetime
-from typing import Optional
+from datetime import date
+
 from pydantic import BaseModel
 
 
 # Request schemas
 class PageViewRequest(BaseModel):
     path: str
-    full_url: Optional[str] = None
-    referrer: Optional[str] = None
+    full_url: str | None = None
+    referrer: str | None = None
     session_id: str
-    time_on_page: Optional[int] = None
+    time_on_page: int | None = None
 
 
 class ArticleViewRequest(BaseModel):
     article_id: str
     session_id: str
-    time_on_article: Optional[int] = None
-    scroll_depth: Optional[int] = None
+    time_on_article: int | None = None
+    scroll_depth: int | None = None
 
 
 class SearchQueryRequest(BaseModel):
     query: str
     results_count: int
     session_id: str
-    category_filter: Optional[str] = None
-    type_filter: Optional[str] = None
+    category_filter: str | None = None
+    type_filter: str | None = None
 
 
 class SearchClickRequest(BaseModel):
@@ -38,13 +38,13 @@ class SearchClickRequest(BaseModel):
 class EventRequest(BaseModel):
     event_type: str
     event_action: str
-    event_category: Optional[str] = None
-    event_label: Optional[str] = None
-    event_value: Optional[float] = None
-    page_path: Optional[str] = None
-    article_id: Optional[str] = None
+    event_category: str | None = None
+    event_label: str | None = None
+    event_value: float | None = None
+    page_path: str | None = None
+    article_id: str | None = None
     session_id: str
-    metadata: Optional[dict] = None
+    metadata: dict[str, str | int | float | bool | None] | None = None
 
 
 # Response schemas
@@ -54,7 +54,7 @@ class DailyStatsResponse(BaseModel):
     unique_visitors: int
     total_article_views: int
     unique_articles_viewed: int
-    avg_time_on_article: Optional[float]
+    avg_time_on_article: float | None
     total_searches: int
     searches_with_results: int
     searches_with_clicks: int
@@ -77,7 +77,7 @@ class TopArticleResponse(BaseModel):
     article_id: str
     article_title: str
     article_slug: str
-    category_name: Optional[str]
+    category_name: str | None
     view_count: int
     unique_visitors: int
 
@@ -86,7 +86,7 @@ class TopSearchQueryResponse(BaseModel):
     rank: int
     query: str
     search_count: int
-    click_through_rate: Optional[float]
+    click_through_rate: float | None
 
 
 class AnalyticsSummaryResponse(BaseModel):
@@ -97,14 +97,14 @@ class AnalyticsSummaryResponse(BaseModel):
     unique_visitors: int
     total_article_views: int
     total_searches: int
-    avg_time_on_article: Optional[float]
-    bounce_rate: Optional[float]
-    
+    avg_time_on_article: float | None
+    bounce_rate: float | None
+
     # Comparison with previous period
-    page_views_change: Optional[float]  # percentage
-    visitors_change: Optional[float]
-    article_views_change: Optional[float]
-    searches_change: Optional[float]
+    page_views_change: float | None  # percentage
+    visitors_change: float | None
+    article_views_change: float | None
+    searches_change: float | None
 
 
 class TrafficSourceResponse(BaseModel):

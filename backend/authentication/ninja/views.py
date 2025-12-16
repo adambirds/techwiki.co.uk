@@ -4,9 +4,8 @@ import logging
 from typing import Any
 
 from django.contrib.auth import authenticate, login, logout
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
 from django.middleware.csrf import get_token
-from django.views.decorators.csrf import ensure_csrf_cookie
 from ninja import Router
 
 from authentication.models import User
@@ -79,21 +78,26 @@ def login_user(request: HttpRequest, login_data: LoginRequest) -> tuple[int, dic
     from authentication.twofactor.utils import create_2fa_challenge, is_2fa_enabled
 
     try:
-        logger.info(f"[LOGIN] Attempting login for email: {login_data.email}")
+        logger.info("[LOGIN] Attempting login for email: %s", login_data.email)
         user = authenticate(request, username=login_data.email, password=login_data.password)
-        logger.info(f"[LOGIN] Authentication result: {user is not None}")
-        
+        logger.info("[LOGIN] Authentication result: %s", user is not None)
+
         if user is None:
-            logger.warning(f"[LOGIN] Invalid credentials for email: {login_data.email}")
+            logger.warning("[LOGIN] Invalid credentials for email: %s", login_data.email)
             return 401, {
                 "message": "The username and password entered are incorrect.",
                 "success": False,
                 "code": "invalid_credentials",
             }
 
-        logger.info(f"[LOGIN] User authenticated: {user.email}, is_staff: {user.is_staff}, is_superuser: {user.is_superuser}")
+        logger.info(
+            "[LOGIN] User authenticated: %s, is_staff: %s, is_superuser: %s",
+            user.email,
+            user.is_staff,
+            user.is_superuser,
+        )
         if not (user.is_staff or user.is_superuser):
-            logger.warning(f"[LOGIN] User not staff/superuser: {user.email}")
+            logger.warning("[LOGIN] User not staff/superuser: %s", user.email)
             return 403, {
                 "message": "You do not have permission to access this resource.",
                 "success": False,
@@ -101,9 +105,9 @@ def login_user(request: HttpRequest, login_data: LoginRequest) -> tuple[int, dic
             }
 
         # Check if 2FA is enabled
-        logger.info(f"[LOGIN] Checking 2FA status for: {user.email}")
+        logger.info("[LOGIN] Checking 2FA status for: %s", user.email)
         if is_2fa_enabled(user):
-            logger.info(f"[LOGIN] 2FA required for: {user.email}")
+            logger.info("[LOGIN] 2FA required for: %s", user.email)
             # Create a 2FA challenge instead of logging in
             token = create_2fa_challenge(user, request)
             return 200, {
@@ -113,11 +117,11 @@ def login_user(request: HttpRequest, login_data: LoginRequest) -> tuple[int, dic
                 "message": "Two-factor authentication is required",
             }
 
-        logger.info(f"[LOGIN] Calling Django login for: {user.email}")
+        logger.info("[LOGIN] Calling Django login for: %s", user.email)
         login(request, user)
-        logger.info(f"[LOGIN] Getting CSRF token")
+        logger.info("[LOGIN] Getting CSRF token")
         get_token(request)  # rotate/ensure CSRF with new session
-        logger.info(f"[LOGIN] Login successful for: {user.email}")
+        logger.info("[LOGIN] Login successful for: %s", user.email)
         return 200, {
             "user": transform_user_to_response(user),
             "message": "Login successful",

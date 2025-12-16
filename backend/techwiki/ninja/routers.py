@@ -7,8 +7,8 @@ from ninja import NinjaAPI
 from ninja.errors import HttpError
 from pydantic import ValidationError
 
-from apps.wiki.views import wiki_router
 from apps.analytics.views import router as analytics_router
+from apps.wiki.views import wiki_router
 from authentication.auth_service.views import auth_service_router
 from authentication.ninja.views import auth_router
 from authentication.sessions.views import sessions_router
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 api = NinjaAPI(
     title="TechWiki API",
     version="1.0",
-    description="API for the TechWiki authentication and services", # Disable CSRF globally - handle it per-router
+    description="API for the TechWiki authentication and services",  # Disable CSRF globally - handle it per-router
 )
 
 # Register nested routers

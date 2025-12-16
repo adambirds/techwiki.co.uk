@@ -41,28 +41,33 @@ class GraphQL400LoggerMiddleware:
         """
         path = scope.get("path", "")
         method = scope.get("method", "")
-        logger.info(f"[ASGI] Received {method} {path}")
-        
+        logger.info("[ASGI] Received %s %s", method, path)
+
         if scope.get("type") != "http" or scope.get("path") != "/graphql/":
             # The wrapped app (self.app) has a signature that mypy infers from
             # Django, which is slightly different from the standard ASGIApp.
             # We ignore the type error because we know they are compatible in practice.
-            logger.info(f"[ASGI] Passing to Django: {method} {path}")
-            
+            logger.info("[ASGI] Passing to Django: %s %s", method, path)
+
             # Wrap send to log when response is sent
             async def wrapped_send(message: Message) -> None:
                 if message["type"] == "http.response.start":
-                    logger.info(f"[ASGI] Sending response start for: {method} {path} - status: {message.get('status')}")
+                    logger.info(
+                        "[ASGI] Sending response start for: %s %s - status: %s",
+                        method,
+                        path,
+                        message.get("status"),
+                    )
                 elif message["type"] == "http.response.body":
-                    logger.info(f"[ASGI] Sending response body for: {method} {path}")
+                    logger.info("[ASGI] Sending response body for: %s %s", method, path)
                 await send(message)
-            
-            logger.info(f"[ASGI] About to call Django app for: {method} {path}")
+
+            logger.info("[ASGI] About to call Django app for: %s %s", method, path)
             await self.app(scope, receive, wrapped_send)  # type: ignore[arg-type]
-            logger.info(f"[ASGI] Django returned for: {method} {path}")
+            logger.info("[ASGI] Django returned for: %s %s", method, path)
             return
 
-        logger.info(f"[ASGI] Processing GraphQL request")
+        logger.info("[ASGI] Processing GraphQL request")
         body: bytes = b""
         more_body: bool = True
         received_messages: list[Message] = []
@@ -87,13 +92,13 @@ class GraphQL400LoggerMiddleware:
 
         status_holder: dict[str, int] = {}
 
-        async def wrapped_send(message: Message) -> None:
+        async def graphql_wrapped_send(message: Message) -> None:
             if message["type"] == "http.response.start":
                 status_holder["status"] = message["status"]
             await send(message)
 
         # As before, we ignore the type incompatibility when calling the wrapped app.
-        await self.app(scope, replay_receive, wrapped_send)  # type: ignore[arg-type]
+        await self.app(scope, replay_receive, graphql_wrapped_send)  # type: ignore[arg-type]
 
         if status_holder.get("status") == 400:
             logger.warning("[GraphQL 400] Body:\n%s", body.decode("utf-8", errors="replace"))

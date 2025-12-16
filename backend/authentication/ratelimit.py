@@ -3,9 +3,10 @@
 import hashlib
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 from django.conf import settings
 from django.core.cache import cache
@@ -21,30 +22,24 @@ class RateLimitConfig:
     requests: int  # Number of requests allowed
     window: int  # Time window in seconds
     block_duration: int = 0  # How long to block after limit exceeded (0 = just reject)
-    
+
 
 # Default rate limit configurations for auth endpoints
 RATE_LIMITS = {
     # Login: 5 attempts per minute per IP, 10 per 15 minutes per account
     "login_ip": RateLimitConfig(requests=5, window=60, block_duration=300),
     "login_account": RateLimitConfig(requests=10, window=900, block_duration=900),
-    
     # Registration: 3 per hour per IP
     "register": RateLimitConfig(requests=3, window=3600, block_duration=3600),
-    
     # Password reset: 3 per hour per IP, 3 per hour per email
     "password_reset_ip": RateLimitConfig(requests=3, window=3600, block_duration=0),
     "password_reset_email": RateLimitConfig(requests=3, window=3600, block_duration=0),
-    
     # 2FA verification: 5 attempts per 5 minutes
     "2fa_verify": RateLimitConfig(requests=5, window=300, block_duration=300),
-    
     # Email verification: 5 requests per hour
     "email_verify": RateLimitConfig(requests=5, window=3600, block_duration=0),
-    
     # Passkey discovery auth: 10 per minute per IP
     "passkey_discover": RateLimitConfig(requests=10, window=60, block_duration=60),
-    
     # API general: 100 requests per minute
     "api_general": RateLimitConfig(requests=100, window=60, block_duration=0),
 }
@@ -65,10 +60,10 @@ def get_client_ip(request: HttpRequest) -> str:
     return request.META.get("REMOTE_ADDR", "unknown")
 
 
-class RateLimitExceeded(Exception):
+class RateLimitExceededError(Exception):
     """Exception raised when rate limit is exceeded."""
 
-    def __init__(self, retry_after: int = 0, message: str = "Rate limit exceeded"):
+    def __init__(self, retry_after: int = 0, message: str = "Rate limit exceeded") -> None:
         self.retry_after = retry_after
         self.message = message
         super().__init__(message)
@@ -80,17 +75,17 @@ def check_rate_limit(
 ) -> tuple[bool, int, int]:
     """
     Check if a rate limit has been exceeded.
-    
+
     Args:
         key: The cache key for this rate limit
         config: The rate limit configuration
-    
+
     Returns:
         Tuple of (is_allowed, remaining_requests, retry_after_seconds)
     """
     try:
         now = time.time()
-        
+
         # Check if currently blocked
         block_key = f"{key}:blocked"
         blocked_until = cache.get(block_key)
@@ -101,29 +96,29 @@ def check_rate_limit(
         # Get current request timestamps
         timestamps_key = f"{key}:timestamps"
         timestamps: list[float] = cache.get(timestamps_key, [])
-        
+
         # Remove expired timestamps
         window_start = now - config.window
         timestamps = [ts for ts in timestamps if ts > window_start]
-        
+
         # Check if limit exceeded
         if len(timestamps) >= config.requests:
             # Calculate when the oldest request will expire
             oldest = min(timestamps)
             retry_after = int(config.window - (now - oldest)) + 1
-            
+
             # Block if configured
             if config.block_duration > 0:
                 cache.set(block_key, now + config.block_duration, config.block_duration)
                 retry_after = config.block_duration
                 logger.warning("Rate limit exceeded and blocked for key: %s", key)
-            
+
             return False, 0, retry_after
-        
+
         # Add current request
         timestamps.append(now)
         cache.set(timestamps_key, timestamps, config.window + 60)  # Extra buffer
-        
+
         remaining = config.requests - len(timestamps)
         return True, remaining, 0
     except Exception as e:
@@ -135,25 +130,26 @@ def check_rate_limit(
 def rate_limit(
     limit_type: str,
     get_identifier: Callable[[HttpRequest], str] | None = None,
-) -> Callable:
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Decorator for rate limiting views.
-    
+
     Args:
         limit_type: The type of rate limit (key in RATE_LIMITS)
         get_identifier: Optional function to get identifier from request.
                        Defaults to client IP.
-    
+
     Usage:
         @rate_limit("login_ip")
         def login_view(request):
             ...
-        
+
         @rate_limit("login_account", lambda r: r.POST.get("email", ""))
         def login_view(request):
             ...
     """
-    def decorator(view_func: Callable) -> Callable:
+
+    def decorator(view_func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(view_func)
         def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> Any:
             # Skip rate limiting in debug mode if configured
@@ -217,14 +213,14 @@ def check_rate_limit_for_request(
 ) -> tuple[bool, str, int]:
     """
     Check rate limit for a request without blocking.
-    
+
     Useful for checking limits before expensive operations.
-    
+
     Args:
         request: The HTTP request
         limit_type: The type of rate limit
         identifier: Optional identifier (defaults to IP)
-    
+
     Returns:
         Tuple of (is_allowed, message, retry_after)
     """
@@ -253,10 +249,10 @@ def record_failed_attempt(
 ) -> None:
     """
     Record a failed attempt for rate limiting.
-    
+
     This can be used to count failed login attempts without waiting
     for the view to complete.
-    
+
     Args:
         limit_type: The type of rate limit
         identifier: The identifier to rate limit on
@@ -270,11 +266,11 @@ def record_failed_attempt(
 
     timestamps_key = f"{key}:timestamps"
     timestamps: list[float] = cache.get(timestamps_key, [])
-    
+
     # Remove expired
     window_start = now - config.window
     timestamps = [ts for ts in timestamps if ts > window_start]
-    
+
     timestamps.append(now)
     cache.set(timestamps_key, timestamps, config.window + 60)
 
@@ -282,9 +278,9 @@ def record_failed_attempt(
 def reset_rate_limit(limit_type: str, identifier: str) -> None:
     """
     Reset rate limit for an identifier.
-    
+
     Useful after successful authentication to clear failed attempt counts.
-    
+
     Args:
         limit_type: The type of rate limit
         identifier: The identifier to reset

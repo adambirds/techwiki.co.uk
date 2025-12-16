@@ -30,7 +30,7 @@ def get_client_ip(request: HttpRequest) -> str | None:
 def parse_user_agent(user_agent: str) -> dict[str, str]:
     """
     Parse user agent string to extract device, browser, and OS information.
-    
+
     Returns a dictionary with:
     - device_type: desktop, mobile, tablet, or unknown
     - device_name: Human-readable device description
@@ -101,7 +101,7 @@ def parse_user_agent(user_agent: str) -> dict[str, str]:
         device_parts.append(result["browser"])
     if result["operating_system"] != "Unknown":
         device_parts.append(f"on {result['operating_system']}")
-    
+
     if device_parts:
         result["device_name"] = " ".join(device_parts)
     else:
@@ -117,12 +117,12 @@ def create_user_session(
 ) -> "UserSession":
     """
     Create a new UserSession record for a user login.
-    
+
     Args:
         user: The authenticated user
         request: The HTTP request object
         auth_method: How the user authenticated (password, passkey, 2fa)
-    
+
     Returns:
         The created UserSession instance
     """
@@ -133,7 +133,8 @@ def create_user_session(
         request.session.create()
 
     session_key = request.session.session_key
-    
+    assert session_key is not None, "Session key should exist after create()"
+
     # Check if session already exists
     existing = UserSession.objects.filter(session_key=session_key).first()
     if existing:
@@ -179,11 +180,11 @@ def create_user_session(
 def revoke_user_session(session_id: str, user: "User") -> bool:
     """
     Revoke (delete) a user session.
-    
+
     Args:
         session_id: The UUID of the session to revoke
         user: The user who owns the session (for authorization)
-    
+
     Returns:
         True if session was revoked, False if not found or unauthorized
     """
@@ -193,7 +194,7 @@ def revoke_user_session(session_id: str, user: "User") -> bool:
 
     try:
         session = UserSession.objects.get(id=session_id, user=user)
-        
+
         # Delete the Django session to actually log them out
         try:
             DjangoSession.objects.filter(session_key=session.session_key).delete()
@@ -202,7 +203,7 @@ def revoke_user_session(session_id: str, user: "User") -> bool:
 
         # Delete our session record
         session.delete()
-        
+
         logger.info("Revoked session %s for user %s", session_id, user.email)
         return True
     except UserSession.DoesNotExist:
@@ -212,11 +213,11 @@ def revoke_user_session(session_id: str, user: "User") -> bool:
 def revoke_all_other_sessions(user: "User", current_session_key: str) -> int:
     """
     Revoke all sessions for a user except the current one.
-    
+
     Args:
         user: The user whose sessions to revoke
         current_session_key: The session key to keep active
-    
+
     Returns:
         Number of sessions revoked
     """
@@ -224,19 +225,17 @@ def revoke_all_other_sessions(user: "User", current_session_key: str) -> int:
 
     from authentication.sessions.models import UserSession
 
-    other_sessions = UserSession.objects.filter(user=user).exclude(
-        session_key=current_session_key
-    )
-    
+    other_sessions = UserSession.objects.filter(user=user).exclude(session_key=current_session_key)
+
     count = other_sessions.count()
-    
+
     # Delete Django sessions
     session_keys = list(other_sessions.values_list("session_key", flat=True))
     DjangoSession.objects.filter(session_key__in=session_keys).delete()
-    
+
     # Delete our session records
     other_sessions.delete()
-    
+
     logger.info("Revoked %d sessions for user %s", count, user.email)
     return count
 
@@ -244,9 +243,9 @@ def revoke_all_other_sessions(user: "User", current_session_key: str) -> int:
 def cleanup_expired_sessions() -> int:
     """
     Delete expired session records.
-    
+
     Should be run periodically via a celery task or management command.
-    
+
     Returns:
         Number of sessions deleted
     """
@@ -255,6 +254,6 @@ def cleanup_expired_sessions() -> int:
     expired = UserSession.objects.filter(expires_at__lt=timezone.now())
     count = expired.count()
     expired.delete()
-    
+
     logger.info("Cleaned up %d expired sessions", count)
     return count

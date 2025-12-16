@@ -1,46 +1,37 @@
 """Analytics API views using Django Ninja."""
 
-from datetime import date, datetime, timedelta
-from typing import Optional
-from uuid import UUID
+import contextlib
+from datetime import timedelta
 
-from django.db.models import Count, Avg, Sum, F
+from django.db.models import Avg, Count, F
 from django.db.models.functions import TruncDate
+from django.http import HttpRequest
 from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 
-from authentication.models import User
 from apps.wiki.models import Article
-from .models import (
-    PageView,
-    ArticleView,
-    SearchQuery,
-    Event,
-    DailyStats,
-    TopArticle,
-    TopSearchQuery,
-)
+
+from .models import ArticleView, DailyStats, Event, PageView, SearchQuery
 from .schemas import (
-    PageViewRequest,
+    AnalyticsDashboardResponse,
+    AnalyticsSummaryResponse,
     ArticleViewRequest,
-    SearchQueryRequest,
-    SearchClickRequest,
-    EventRequest,
     DailyStatsResponse,
+    DeviceBreakdownResponse,
+    EventRequest,
+    PageViewRequest,
+    SearchClickRequest,
+    SearchQueryRequest,
     TopArticleResponse,
     TopSearchQueryResponse,
-    AnalyticsSummaryResponse,
     TrafficSourceResponse,
-    DeviceBreakdownResponse,
-    AnalyticsDashboardResponse,
 )
-
 
 router = Router(tags=["Analytics"])
 
 
-def get_client_ip(request) -> Optional[str]:
+def get_client_ip(request: HttpRequest) -> str | None:
     """Extract client IP from request."""
     x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
@@ -48,10 +39,10 @@ def get_client_ip(request) -> Optional[str]:
     return request.META.get("REMOTE_ADDR")
 
 
-def parse_user_agent(user_agent: str) -> dict:
+def parse_user_agent(user_agent: str) -> dict[str, str]:
     """Parse user agent string to extract device info."""
     user_agent_lower = user_agent.lower()
-    
+
     # Device type
     if "mobile" in user_agent_lower or "android" in user_agent_lower:
         if "tablet" in user_agent_lower or "ipad" in user_agent_lower:
@@ -62,7 +53,7 @@ def parse_user_agent(user_agent: str) -> dict:
         device_type = "bot"
     else:
         device_type = "desktop"
-    
+
     # Browser
     if "chrome" in user_agent_lower and "edg" not in user_agent_lower:
         browser = "Chrome"
@@ -76,7 +67,7 @@ def parse_user_agent(user_agent: str) -> dict:
         browser = "Opera"
     else:
         browser = "Other"
-    
+
     # OS
     if "windows" in user_agent_lower:
         os = "Windows"
@@ -90,7 +81,7 @@ def parse_user_agent(user_agent: str) -> dict:
         os = "iOS"
     else:
         os = "Other"
-    
+
     return {"device_type": device_type, "browser": browser, "os": os}
 
 
@@ -98,15 +89,16 @@ def parse_user_agent(user_agent: str) -> dict:
 # Public tracking endpoints (no auth required)
 # =============================================================================
 
+
 @router.post("/track/pageview")
-def track_page_view(request, data: PageViewRequest):
+def track_page_view(request: HttpRequest, data: PageViewRequest) -> dict[str, str | bool]:
     """Track a page view."""
     user_agent = request.META.get("HTTP_USER_AGENT", "")
     ua_info = parse_user_agent(user_agent)
-    
+
     # Get user if authenticated
     user = request.user if request.user.is_authenticated else None
-    
+
     page_view = PageView.objects.create(
         path=data.path,
         full_url=data.full_url or "",
@@ -120,20 +112,20 @@ def track_page_view(request, data: PageViewRequest):
         os=ua_info["os"],
         time_on_page=data.time_on_page,
     )
-    
+
     return {"success": True, "id": str(page_view.id)}
 
 
 @router.post("/track/article")
-def track_article_view(request, data: ArticleViewRequest):
+def track_article_view(request: HttpRequest, data: ArticleViewRequest) -> dict[str, str | bool]:
     """Track an article view."""
     try:
         article = Article.objects.get(id=data.article_id)
     except Article.DoesNotExist:
         raise HttpError(404, "Article not found")
-    
+
     user = request.user if request.user.is_authenticated else None
-    
+
     article_view = ArticleView.objects.create(
         article=article,
         user=user,
@@ -141,20 +133,18 @@ def track_article_view(request, data: ArticleViewRequest):
         time_on_article=data.time_on_article,
         scroll_depth=data.scroll_depth,
     )
-    
+
     # Update article view count
-    Article.objects.filter(id=data.article_id).update(
-        view_count=F("view_count") + 1
-    )
-    
+    Article.objects.filter(id=data.article_id).update(view_count=F("view_count") + 1)
+
     return {"success": True, "id": str(article_view.id)}
 
 
 @router.post("/track/search")
-def track_search_query(request, data: SearchQueryRequest):
+def track_search_query(request: HttpRequest, data: SearchQueryRequest) -> dict[str, str | bool]:
     """Track a search query."""
     user = request.user if request.user.is_authenticated else None
-    
+
     search_query = SearchQuery.objects.create(
         query=data.query,
         results_count=data.results_count,
@@ -163,38 +153,36 @@ def track_search_query(request, data: SearchQueryRequest):
         category_filter=data.category_filter or "",
         type_filter=data.type_filter or "",
     )
-    
+
     return {"success": True, "id": str(search_query.id)}
 
 
 @router.post("/track/search-click")
-def track_search_click(request, data: SearchClickRequest):
+def track_search_click(request: HttpRequest, data: SearchClickRequest) -> dict[str, bool]:
     """Track when a user clicks on a search result."""
     try:
         search_query = SearchQuery.objects.get(id=data.search_id)
         article = Article.objects.get(id=data.article_id)
     except (SearchQuery.DoesNotExist, Article.DoesNotExist):
         raise HttpError(404, "Search query or article not found")
-    
+
     search_query.clicked_result = article
     search_query.clicked_position = data.position
     search_query.save(update_fields=["clicked_result", "clicked_position"])
-    
+
     return {"success": True}
 
 
 @router.post("/track/event")
-def track_event(request, data: EventRequest):
+def track_event(request: HttpRequest, data: EventRequest) -> dict[str, str | bool]:
     """Track a custom event."""
     user = request.user if request.user.is_authenticated else None
-    
+
     article = None
     if data.article_id:
-        try:
+        with contextlib.suppress(Article.DoesNotExist):
             article = Article.objects.get(id=data.article_id)
-        except Article.DoesNotExist:
-            pass
-    
+
     event = Event.objects.create(
         event_type=data.event_type,
         event_action=data.event_action,
@@ -207,7 +195,7 @@ def track_event(request, data: EventRequest):
         session_id=data.session_id,
         metadata=data.metadata or {},
     )
-    
+
     return {"success": True, "id": str(event.id)}
 
 
@@ -215,7 +203,8 @@ def track_event(request, data: EventRequest):
 # Admin dashboard endpoints (requires admin role)
 # =============================================================================
 
-def require_admin(request):
+
+def require_admin(request: HttpRequest) -> None:
     """Check if user is admin."""
     if not request.user.is_authenticated:
         raise HttpError(401, "Authentication required")
@@ -225,12 +214,12 @@ def require_admin(request):
 
 @router.get("/dashboard", response=AnalyticsDashboardResponse)
 def get_analytics_dashboard(
-    request,
+    request: HttpRequest,
     period: str = "week",  # "today", "week", "month"
-):
+) -> AnalyticsDashboardResponse:
     """Get comprehensive analytics dashboard data."""
     require_admin(request)
-    
+
     # Calculate date range
     today = timezone.now().date()
     if period == "today":
@@ -245,18 +234,18 @@ def get_analytics_dashboard(
         start_date = today - timedelta(days=30)
         prev_start = today - timedelta(days=60)
         prev_end = today - timedelta(days=31)
-    
+
     # Get current period stats
     current_views = PageView.objects.filter(created_at__date__gte=start_date)
     current_article_views = ArticleView.objects.filter(created_at__date__gte=start_date)
     current_searches = SearchQuery.objects.filter(created_at__date__gte=start_date)
-    
+
     total_page_views = current_views.count()
     unique_visitors = current_views.values("session_id").distinct().count()
     total_article_views = current_article_views.count()
     total_searches = current_searches.count()
     avg_time = current_article_views.aggregate(avg=Avg("time_on_article"))["avg"]
-    
+
     # Get previous period stats for comparison
     prev_views = PageView.objects.filter(
         created_at__date__gte=prev_start,
@@ -270,18 +259,18 @@ def get_analytics_dashboard(
         created_at__date__gte=prev_start,
         created_at__date__lte=prev_end,
     )
-    
+
     prev_page_views = prev_views.count()
     prev_visitors = prev_views.values("session_id").distinct().count()
     prev_total_article = prev_article_views.count()
     prev_total_searches = prev_searches.count()
-    
+
     # Calculate percentage changes
-    def calc_change(current, previous):
+    def calc_change(current: int, previous: int) -> float:
         if previous == 0:
             return 100.0 if current > 0 else 0.0
         return ((current - previous) / previous) * 100
-    
+
     summary = AnalyticsSummaryResponse(
         period=period,
         total_page_views=total_page_views,
@@ -295,7 +284,7 @@ def get_analytics_dashboard(
         article_views_change=calc_change(total_article_views, prev_total_article),
         searches_change=calc_change(total_searches, prev_total_searches),
     )
-    
+
     # Get daily stats
     daily_stats_qs = DailyStats.objects.filter(date__gte=start_date).order_by("-date")
     daily_stats = [
@@ -324,7 +313,7 @@ def get_analytics_dashboard(
         )
         for stat in daily_stats_qs
     ]
-    
+
     # Get top articles
     top_articles_qs = (
         current_article_views.values("article")
@@ -334,7 +323,7 @@ def get_analytics_dashboard(
         )
         .order_by("-view_count")[:10]
     )
-    
+
     top_articles = []
     for i, item in enumerate(top_articles_qs, 1):
         try:
@@ -352,7 +341,7 @@ def get_analytics_dashboard(
             )
         except Article.DoesNotExist:
             continue
-    
+
     # Get top searches
     top_searches_qs = (
         current_searches.values("query")
@@ -362,21 +351,19 @@ def get_analytics_dashboard(
         )
         .order_by("-search_count")[:10]
     )
-    
+
     top_searches = [
         TopSearchQueryResponse(
             rank=i,
             query=item["query"],
             search_count=item["search_count"],
             click_through_rate=(
-                (item["clicks"] / item["search_count"]) * 100
-                if item["search_count"] > 0
-                else None
+                (item["clicks"] / item["search_count"]) * 100 if item["search_count"] > 0 else None
             ),
         )
         for i, item in enumerate(top_searches_qs, 1)
     ]
-    
+
     # Get traffic sources (from referrer)
     referrer_stats = (
         current_views.exclude(referrer__isnull=True)
@@ -385,26 +372,28 @@ def get_analytics_dashboard(
         .annotate(count=Count("id"))
         .order_by("-count")[:10]
     )
-    
+
     total_with_referrer = sum(r["count"] for r in referrer_stats)
     traffic_sources = [
         TrafficSourceResponse(
             source=item["referrer"][:100],
             count=item["count"],
-            percentage=(item["count"] / total_with_referrer * 100) if total_with_referrer > 0 else 0,
+            percentage=(item["count"] / total_with_referrer * 100)
+            if total_with_referrer > 0
+            else 0,
         )
         for item in referrer_stats
     ]
-    
+
     # Get device breakdown
     device_counts = current_views.values("device_type").annotate(count=Count("id"))
     device_dict = {d["device_type"]: d["count"] for d in device_counts}
-    
+
     desktop = device_dict.get("desktop", 0)
     mobile = device_dict.get("mobile", 0)
     tablet = device_dict.get("tablet", 0)
     total_devices = desktop + mobile + tablet or 1
-    
+
     device_breakdown = DeviceBreakdownResponse(
         desktop=desktop,
         mobile=mobile,
@@ -413,7 +402,7 @@ def get_analytics_dashboard(
         mobile_percentage=(mobile / total_devices) * 100,
         tablet_percentage=(tablet / total_devices) * 100,
     )
-    
+
     return AnalyticsDashboardResponse(
         summary=summary,
         daily_stats=daily_stats,
@@ -425,26 +414,28 @@ def get_analytics_dashboard(
 
 
 @router.get("/realtime")
-def get_realtime_analytics(request):
+def get_realtime_analytics(
+    request: HttpRequest,
+) -> dict[str, bool | int | list[dict[str, str | int]] | str]:
     """Get real-time analytics (last 30 minutes)."""
     require_admin(request)
-    
+
     thirty_mins_ago = timezone.now() - timedelta(minutes=30)
-    
+
     active_sessions = (
         PageView.objects.filter(created_at__gte=thirty_mins_ago)
         .values("session_id")
         .distinct()
         .count()
     )
-    
+
     recent_views = (
         PageView.objects.filter(created_at__gte=thirty_mins_ago)
         .values("path")
         .annotate(count=Count("id"))
         .order_by("-count")[:5]
     )
-    
+
     return {
         "success": True,
         "active_users": active_sessions,
@@ -454,35 +445,37 @@ def get_realtime_analytics(request):
 
 
 @router.get("/article/{article_id}")
-def get_article_analytics(request, article_id: str):
+def get_article_analytics(
+    request: HttpRequest, article_id: str
+) -> dict[str, bool | str | int | float | list[dict[str, str | int]] | None]:
     """Get analytics for a specific article."""
     require_admin(request)
-    
+
     try:
         article = Article.objects.get(id=article_id)
     except Article.DoesNotExist:
         raise HttpError(404, "Article not found")
-    
+
     # Last 30 days
     start_date = timezone.now().date() - timedelta(days=30)
-    
+
     views_qs = ArticleView.objects.filter(
         article=article,
         created_at__date__gte=start_date,
     )
-    
+
     daily_views = (
         views_qs.annotate(date=TruncDate("created_at"))
         .values("date")
         .annotate(count=Count("id"), unique=Count("session_id", distinct=True))
         .order_by("date")
     )
-    
+
     total_views = views_qs.count()
     unique_visitors = views_qs.values("session_id").distinct().count()
     avg_time = views_qs.aggregate(avg=Avg("time_on_article"))["avg"]
     avg_scroll = views_qs.aggregate(avg=Avg("scroll_depth"))["avg"]
-    
+
     return {
         "success": True,
         "article_id": str(article.id),

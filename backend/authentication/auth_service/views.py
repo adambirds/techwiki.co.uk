@@ -227,13 +227,11 @@ def auth_login(request: HttpRequest, data: LoginRequest) -> tuple[int, dict[str,
     Returns success with user data, or requires_2fa if 2FA is enabled.
     Rate limited to prevent brute force attacks.
     """
-    logger.info(f"Login attempt for {data.email}")
+    logger.info("Login attempt for %s", data.email)
     client_ip = _get_client_ip(request)
 
     # Check rate limits
-    ip_allowed, ip_msg, ip_retry = check_rate_limit_for_request(
-        request, "login_ip", client_ip
-    )
+    ip_allowed, ip_msg, ip_retry = check_rate_limit_for_request(request, "login_ip", client_ip)
     if not ip_allowed:
         return 429, {
             "success": False,
@@ -282,25 +280,25 @@ def auth_login(request: HttpRequest, data: LoginRequest) -> tuple[int, dict[str,
             }
 
         # Log the user in
-        logger.info(f"[LOGIN] About to call Django login function")
+        logger.info("[LOGIN] About to call Django login function")
         login(request, user)
-        logger.info(f"[LOGIN] Django login function completed")
-        logger.info(f"[LOGIN] About to get/set CSRF token")
+        logger.info("[LOGIN] Django login function completed")
+        logger.info("[LOGIN] About to get/set CSRF token")
         get_token(request)
-        logger.info(f"[LOGIN] CSRF token obtained")
+        logger.info("[LOGIN] CSRF token obtained")
 
         # Create session record for device tracking
-        logger.info(f"[LOGIN] About to create user session")
+        logger.info("[LOGIN] About to create user session")
         create_user_session(user, request, auth_method="password")
-        logger.info(f"[LOGIN] User session created")
+        logger.info("[LOGIN] User session created")
 
         # Reset rate limits on successful login
-        logger.info(f"[LOGIN] Resetting rate limits")
+        logger.info("[LOGIN] Resetting rate limits")
         reset_rate_limit("login_ip", client_ip)
         reset_rate_limit("login_account", data.email.lower())
-        logger.info(f"[LOGIN] Rate limits reset")
+        logger.info("[LOGIN] Rate limits reset")
 
-        logger.info(f"[LOGIN] Preparing response")
+        logger.info("[LOGIN] Preparing response")
         return 200, {
             "success": True,
             "user": transform_user_response(user),
@@ -959,9 +957,7 @@ def begin_discoverable_auth(request: HttpRequest) -> tuple[int, dict[str, Any]]:
     """
     # Check rate limit
     client_ip = _get_client_ip(request)
-    allowed, msg, retry = check_rate_limit_for_request(
-        request, "passkey_discover", client_ip
-    )
+    allowed, msg, retry = check_rate_limit_for_request(request, "passkey_discover", client_ip)
     if not allowed:
         return 429, {
             "success": False,

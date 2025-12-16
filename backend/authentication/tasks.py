@@ -20,7 +20,9 @@ def send_email_with_sendgrid(
     try:
         text_message = render_to_string(text_template, context)
         html_message = render_to_string(html_template, context)
-        from_email = formataddr((settings.DEFAULT_FROM_EMAIL_NAME, settings.DEFAULT_FROM_EMAIL))
+        from_email = formataddr(
+            (getattr(settings, "DEFAULT_FROM_EMAIL_NAME", ""), settings.DEFAULT_FROM_EMAIL)
+        )
 
         email_message = Mail(
             from_email=from_email,
@@ -30,11 +32,11 @@ def send_email_with_sendgrid(
             html_content=html_message,
         )
 
-        sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+        sg = SendGridAPIClient(getattr(settings, "SENDGRID_API_KEY", ""))
         sg.send(email_message)
 
     except Exception as e:
-        webhook_url = settings.DISCORD_WEBHOOK_ERROR_LOGGING_URL
+        webhook_url = getattr(settings, "DISCORD_WEBHOOK_ERROR_LOGGING_URL", "")
         webhook = DiscordWebhook(webhook_url)
 
         embed = DiscordEmbed(
@@ -133,7 +135,7 @@ def send_password_reset_successful_email(email: str, first_name: str) -> None:
 
 @shared_task(queue="general")
 def notify_new_user_signup(user_email: str) -> None:
-    webhook_url = settings.DISCORD_WEBHOOK_SIGNUP_URL
+    webhook_url = getattr(settings, "DISCORD_WEBHOOK_SIGNUP_URL", "")
     webhook = DiscordWebhook(webhook_url)
     webhook.set_content(f"New user signup: {user_email}")
     webhook.execute()
@@ -141,7 +143,7 @@ def notify_new_user_signup(user_email: str) -> None:
 
 @shared_task(queue="general")
 def notify_user_email_verified(user_email: str) -> None:
-    webhook_url = settings.DISCORD_WEBHOOK_SIGNUP_URL
+    webhook_url = getattr(settings, "DISCORD_WEBHOOK_SIGNUP_URL", "")
     webhook = DiscordWebhook(webhook_url)
     webhook.set_content(f"User email verified: {user_email}")
     webhook.execute()

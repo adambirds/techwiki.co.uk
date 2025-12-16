@@ -1,7 +1,10 @@
 """Admin configuration for TechWiki."""
 
 from django.contrib import admin
+from django.forms import ModelForm
+from django.http import HttpRequest
 from django.utils.html import format_html
+from django.utils.safestring import SafeString
 from unfold.admin import ModelAdmin
 
 from apps.wiki.models import (
@@ -31,30 +34,28 @@ class TagAdmin(ModelAdmin):
     search_fields = ["name", "slug"]
     prepopulated_fields = {"slug": ("name",)}
 
-    def article_count(self, obj):
-        return obj.articles.count()
+    @admin.display(description="Articles")
+    def article_count(self, obj: Tag) -> int:
+        return Article.objects.filter(tags=obj).count()
 
-    article_count.short_description = "Articles"
 
-
-class ArticleRevisionInline(admin.TabularInline):
+class ArticleRevisionInline(admin.TabularInline[ArticleRevision, Article]):
     model = ArticleRevision
     extra = 0
     readonly_fields = ["version", "title", "author", "change_summary", "created_at"]
     can_delete = False
 
 
-class ArticleImageInline(admin.TabularInline):
+class ArticleImageInline(admin.TabularInline[ArticleImage, Article]):
     model = ArticleImage
     extra = 1
     readonly_fields = ["image_preview"]
 
-    def image_preview(self, obj):
+    @admin.display(description="Preview")
+    def image_preview(self, obj: ArticleImage) -> SafeString | str:
         if obj.image:
             return format_html('<img src="{}" style="max-height: 100px;" />', obj.image.url)
         return "-"
-
-    image_preview.short_description = "Preview"
 
 
 @admin.register(Article)
@@ -78,34 +79,40 @@ class ArticleAdmin(ModelAdmin):
     date_hierarchy = "created_at"
 
     fieldsets = (
-        (None, {
-            "fields": ("title", "slug", "excerpt", "content")
-        }),
-        ("Classification", {
-            "fields": ("article_type", "category", "tags")
-        }),
-        ("Authorship", {
-            "fields": ("author",)
-        }),
-        ("Status & Moderation", {
-            "fields": ("status", "moderation_notes", "moderator", "moderated_at")
-        }),
-        ("SEO", {
-            "fields": ("meta_title", "meta_description", "featured_image"),
-            "classes": ("collapse",)
-        }),
-        ("Settings", {
-            "fields": ("is_featured", "allow_comments"),
-        }),
-        ("Statistics", {
-            "fields": ("view_count", "version", "created_at", "updated_at", "published_at"),
-            "classes": ("collapse",)
-        }),
+        (None, {"fields": ("title", "slug", "excerpt", "content")}),
+        ("Classification", {"fields": ("article_type", "category", "tags")}),
+        ("Authorship", {"fields": ("author",)}),
+        (
+            "Status & Moderation",
+            {"fields": ("status", "moderation_notes", "moderator", "moderated_at")},
+        ),
+        (
+            "SEO",
+            {
+                "fields": ("meta_title", "meta_description", "featured_image"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Settings",
+            {
+                "fields": ("is_featured", "allow_comments"),
+            },
+        ),
+        (
+            "Statistics",
+            {
+                "fields": ("view_count", "version", "created_at", "updated_at", "published_at"),
+                "classes": ("collapse",),
+            },
+        ),
     )
 
-    def save_model(self, request, obj, form, change):
+    def save_model(
+        self, request: HttpRequest, obj: Article, form: ModelForm[Article], change: bool
+    ) -> None:
         if not obj.author:
-            obj.author = request.user
+            obj.author = request.user  # type: ignore[assignment]
         super().save_model(request, obj, form, change)
 
 
@@ -116,12 +123,11 @@ class ArticleImageAdmin(ModelAdmin):
     search_fields = ["alt_text", "caption"]
     readonly_fields = ["image_preview"]
 
-    def image_preview(self, obj):
+    @admin.display(description="Preview")
+    def image_preview(self, obj: ArticleImage) -> SafeString | str:
         if obj.image:
             return format_html('<img src="{}" style="max-height: 100px;" />', obj.image.url)
         return "-"
-
-    image_preview.short_description = "Preview"
 
 
 @admin.register(Redirect)
@@ -145,12 +151,20 @@ class ModerationLogAdmin(ModelAdmin):
     list_display = ["article", "moderator", "action", "old_status", "new_status", "created_at"]
     list_filter = ["action", "created_at"]
     search_fields = ["article__title", "moderator__email", "notes"]
-    readonly_fields = ["article", "moderator", "action", "old_status", "new_status", "notes", "created_at"]
+    readonly_fields = [
+        "article",
+        "moderator",
+        "action",
+        "old_status",
+        "new_status",
+        "notes",
+        "created_at",
+    ]
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request: HttpRequest) -> bool:
         return False
 
-    def has_change_permission(self, request, obj=None):
+    def has_change_permission(self, request: HttpRequest, obj: ModerationLog | None = None) -> bool:
         return False
 
 
@@ -159,10 +173,20 @@ class ArticleRevisionAdmin(ModelAdmin):
     list_display = ["article", "version", "author", "change_summary", "created_at"]
     list_filter = ["created_at"]
     search_fields = ["article__title", "change_summary"]
-    readonly_fields = ["article", "version", "title", "content", "author", "change_summary", "created_at"]
+    readonly_fields = [
+        "article",
+        "version",
+        "title",
+        "content",
+        "author",
+        "change_summary",
+        "created_at",
+    ]
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request: HttpRequest) -> bool:
         return False
 
-    def has_change_permission(self, request, obj=None):
+    def has_change_permission(
+        self, request: HttpRequest, obj: ArticleRevision | None = None
+    ) -> bool:
         return False

@@ -1,20 +1,16 @@
 """Models for tracking user sessions and devices."""
 
 import uuid
-from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-if TYPE_CHECKING:
-    from authentication.models import User
-
 
 class UserSession(models.Model):
     """
     Tracks user login sessions with device and location information.
-    
+
     This model stores metadata about each session, allowing users to:
     - View all active sessions/devices
     - See last activity time and location

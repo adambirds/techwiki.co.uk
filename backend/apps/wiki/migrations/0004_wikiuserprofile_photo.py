@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("wiki", "0003_alter_wikiuserprofile_bluesky_and_more"),
     ]

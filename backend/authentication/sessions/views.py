@@ -7,10 +7,7 @@ from django.http import HttpRequest
 from ninja import Router, Schema
 
 from authentication.sessions.models import UserSession
-from authentication.sessions.utils import (
-    revoke_all_other_sessions,
-    revoke_user_session,
-)
+from authentication.sessions.utils import revoke_all_other_sessions, revoke_user_session
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +55,7 @@ class RevokeSessionResponse(Schema):
 def list_sessions(request: HttpRequest) -> tuple[int, dict[str, Any]]:
     """
     List all active sessions for the current user.
-    
+
     Returns a list of sessions with device and location information.
     The current session is marked with is_current=True.
     """
@@ -74,13 +71,10 @@ def list_sessions(request: HttpRequest) -> tuple[int, dict[str, Any]]:
         sessions = UserSession.objects.filter(
             user=request.user,
             expires_at__isnull=False,
-        ).exclude(
-            expires_at__lt=__import__("django.utils.timezone", fromlist=["now"]).now()
-        )
+        ).exclude(expires_at__lt=__import__("django.utils.timezone", fromlist=["now"]).now())
 
-        session_list = []
-        for session in sessions:
-            session_list.append({
+        session_list = [
+            {
                 "id": str(session.id),
                 "device_type": session.device_type,
                 "device_name": session.device_name,
@@ -92,7 +86,9 @@ def list_sessions(request: HttpRequest) -> tuple[int, dict[str, Any]]:
                 "last_activity": session.last_activity.isoformat(),
                 "auth_method": session.auth_method,
                 "is_current": session.session_key == current_session_key,
-            })
+            }
+            for session in sessions
+        ]
 
         return 200, {
             "success": True,
@@ -115,7 +111,7 @@ def revoke_session(
 ) -> tuple[int, dict[str, Any]]:
     """
     Revoke (log out) a specific session.
-    
+
     Users cannot revoke their current session (use logout instead).
     """
     if not request.user.is_authenticated:
@@ -144,7 +140,7 @@ def revoke_session(
             }
 
         success = revoke_user_session(data.session_id, request.user)
-        
+
         if success:
             return 200, {
                 "success": True,
@@ -167,7 +163,7 @@ def revoke_session(
 def revoke_all_sessions(request: HttpRequest) -> tuple[int, dict[str, Any]]:
     """
     Revoke all sessions except the current one.
-    
+
     This is useful when a user suspects their account may be compromised.
     """
     if not request.user.is_authenticated:
@@ -178,6 +174,11 @@ def revoke_all_sessions(request: HttpRequest) -> tuple[int, dict[str, Any]]:
 
     try:
         current_session_key = request.session.session_key
+        if current_session_key is None:
+            return 200, {
+                "success": False,
+                "message": "No active session",
+            }
         count = revoke_all_other_sessions(request.user, current_session_key)
 
         return 200, {

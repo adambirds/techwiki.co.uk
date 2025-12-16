@@ -195,12 +195,12 @@ class CustomGroup(Group):
 # Import passkey models so they are registered with Django
 from authentication.passkeys.models import Passkey, PasskeyChallenge  # noqa: F401
 
+# Import session models so they are registered with Django
+from authentication.sessions.models import UserSession  # noqa: F401
+
 # Import 2FA models so they are registered with Django
 from authentication.twofactor.models import (  # noqa: F401
     RecoveryCode,
     TwoFactorChallenge,
     TwoFactorMethod,
 )
-
-# Import session models so they are registered with Django
-from authentication.sessions.models import UserSession  # noqa: F401

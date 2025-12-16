@@ -1,8 +1,9 @@
 """API views for TechWiki documentation platform."""
 
+import contextlib
 import logging
 import re
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 import markdown
@@ -12,7 +13,7 @@ from django.db.models import Q
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.text import slugify
-from ninja import File, Form, Router
+from ninja import Form, Router
 from ninja.files import UploadedFile
 
 from apps.wiki.models import (
@@ -28,25 +29,12 @@ from apps.wiki.models import (
 )
 from apps.wiki.schemas import (
     ArticleCreateRequest,
-    ArticleDetailResponse,
-    ArticleListResponse,
-    ArticleResponse,
-    ArticleSummary,
     ArticleUpdateRequest,
-    AuthorResponse,
-    CategoryListResponse,
-    CategoryResponse,
-    ImageUploadResponse,
     ModerationActionRequest,
-    ModerationResponse,
-    PendingArticleResponse,
     RedirectCreateRequest,
-    RedirectResponse,
-    SearchResponse,
     TagCreateRequest,
-    TagListResponse,
-    TagResponse,
 )
+from authentication.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +70,7 @@ def render_markdown(content: str) -> str:
     return md.convert(content)
 
 
-def get_user_profile(user) -> Optional[WikiUserProfile]:
+def get_user_profile(user: User | None) -> WikiUserProfile | None:
     """Get or create wiki user profile."""
     if not user or not user.is_authenticated:
         return None
@@ -90,7 +78,7 @@ def get_user_profile(user) -> Optional[WikiUserProfile]:
     return profile
 
 
-def article_to_summary(article: Article) -> dict:
+def article_to_summary(article: Article) -> dict[str, Any]:
     """Convert article to summary dict."""
     category_data = None
     if article.category:
@@ -106,7 +94,7 @@ def article_to_summary(article: Article) -> dict:
             "article_count": article.category.article_count,
             "full_path": article.category.full_path,
         }
-    
+
     # Get all categories
     categories_data = [
         {
@@ -161,22 +149,24 @@ def article_to_summary(article: Article) -> dict:
     }
 
 
-def article_to_response(article: Article) -> dict:
+def article_to_response(article: Article) -> dict[str, Any]:
     """Convert article to full response dict."""
     data = article_to_summary(article)
-    data.update({
-        "content": article.content,
-        "rendered_html": article.rendered_html or render_markdown(article.content),
-        "tags": [
-            {"id": str(t.id), "name": t.name, "slug": t.slug, "description": t.description}
-            for t in article.tags.all()
-        ],
-        "meta_title": article.meta_title,
-        "meta_description": article.meta_description,
-        "allow_comments": article.allow_comments,
-        "version": article.version,
-        "full_url": article.full_url,
-    })
+    data.update(
+        {
+            "content": article.content,
+            "rendered_html": article.rendered_html or render_markdown(article.content),
+            "tags": [
+                {"id": str(t.id), "name": t.name, "slug": t.slug, "description": t.description}
+                for t in article.tags.all()
+            ],
+            "meta_title": article.meta_title,
+            "meta_description": article.meta_description,
+            "allow_comments": article.allow_comments,
+            "version": article.version,
+            "full_url": article.full_url,
+        }
+    )
     return data
 
 
@@ -189,7 +179,7 @@ def article_to_response(article: Article) -> dict:
 def list_categories(request: HttpRequest) -> tuple[int, dict[str, Any]]:
     """List all active categories."""
     categories = Category.objects.filter(is_active=True).select_related("parent")
-    
+
     return 200, {
         "success": True,
         "categories": [
@@ -240,11 +230,18 @@ def get_category(request: HttpRequest, slug: str) -> tuple[int, dict[str, Any]]:
 
 
 @wiki_router.post("/admin/categories", response={200: dict})
-def create_category(request: HttpRequest, name: str = Form(""), slug: str = Form(""), description: str = Form(""), icon: str = Form(""), parent_id: str = Form("")) -> tuple[int, dict[str, Any]]:
+def create_category(
+    request: HttpRequest,
+    name: str = Form[str](""),
+    slug: str = Form[str](""),
+    description: str = Form[str](""),
+    icon: str = Form[str](""),
+    parent_id: str = Form[str](""),
+) -> tuple[int, dict[str, Any]]:
     """Create a new category (staff/moderators only)."""
     if not request.user.is_authenticated:
         return 200, {"success": False, "message": "Permission denied"}
-    
+
     profile = get_user_profile(request.user)
     if not (request.user.is_staff or (profile and profile.can_moderate)):
         return 200, {"success": False, "message": "Permission denied"}
@@ -278,16 +275,24 @@ def create_category(request: HttpRequest, name: str = Form(""), slug: str = Form
             },
         }
     except Exception as e:
-        logger.error(f"Failed to create category: {e}")
+        logger.error("Failed to create category: %s", e)
         return 200, {"success": False, "message": "Failed to create category"}
 
 
 @wiki_router.put("/admin/categories/{category_id}", response={200: dict})
-def update_category(request: HttpRequest, category_id: str, name: str = Form(""), slug: str = Form(""), description: str = Form(""), icon: str = Form(""), parent_id: str = Form("")) -> tuple[int, dict[str, Any]]:
+def update_category(
+    request: HttpRequest,
+    category_id: str,
+    name: str = Form[str](""),
+    slug: str = Form[str](""),
+    description: str = Form[str](""),
+    icon: str = Form[str](""),
+    parent_id: str = Form[str](""),
+) -> tuple[int, dict[str, Any]]:
     """Update a category (staff/moderators only)."""
     if not request.user.is_authenticated:
         return 200, {"success": False, "message": "Permission denied"}
-    
+
     profile = get_user_profile(request.user)
     if not (request.user.is_staff or (profile and profile.can_moderate)):
         return 200, {"success": False, "message": "Permission denied"}
@@ -323,7 +328,7 @@ def update_category(request: HttpRequest, category_id: str, name: str = Form("")
     except Category.DoesNotExist:
         return 200, {"success": False, "message": "Category not found"}
     except Exception as e:
-        logger.error(f"Failed to update category: {e}")
+        logger.error("Failed to update category: %s", e)
         return 200, {"success": False, "message": "Failed to update category"}
 
 
@@ -332,14 +337,14 @@ def delete_category(request: HttpRequest, category_id: str) -> tuple[int, dict[s
     """Delete a category (staff/moderators only)."""
     if not request.user.is_authenticated:
         return 200, {"success": False, "message": "Permission denied"}
-    
+
     profile = get_user_profile(request.user)
     if not (request.user.is_staff or (profile and profile.can_moderate)):
         return 200, {"success": False, "message": "Permission denied"}
 
     try:
         category = Category.objects.get(id=category_id)
-        
+
         # Check if category has articles
         if category.article_count > 0:
             return 200, {"success": False, "message": "Cannot delete category with articles"}
@@ -353,7 +358,7 @@ def delete_category(request: HttpRequest, category_id: str) -> tuple[int, dict[s
     except Category.DoesNotExist:
         return 200, {"success": False, "message": "Category not found"}
     except Exception as e:
-        logger.error(f"Failed to delete category: {e}")
+        logger.error("Failed to delete category: %s", e)
         return 200, {"success": False, "message": "Failed to delete category"}
 
 
@@ -380,25 +385,25 @@ def create_tag(request: HttpRequest, data: TagCreateRequest) -> tuple[int, dict[
     """Create a new tag."""
     if not request.user.is_authenticated:
         return 200, {"success": False, "message": "Authentication required"}
-    
+
     # Check if user is staff or has moderation rights
     profile = get_user_profile(request.user)
     if not (request.user.is_staff or (profile and profile.can_moderate)):
         return 200, {"success": False, "message": "Permission denied"}
-    
+
     try:
         slug = slugify(data.name)
-        
+
         # Check if tag already exists
         if Tag.objects.filter(slug=slug).exists():
             return 200, {"success": False, "message": "Tag with this name already exists"}
-        
+
         tag = Tag.objects.create(
             name=data.name,
             slug=slug,
             description=data.description or "",
         )
-        
+
         return 200, {
             "success": True,
             "tag": {
@@ -424,16 +429,18 @@ def list_articles(
     request: HttpRequest,
     page: int = 1,
     per_page: int = 20,
-    category: Optional[str] = None,
-    article_type: Optional[str] = None,
-    tag: Optional[str] = None,
-    featured: Optional[bool] = None,
-    author_id: Optional[str] = None,
+    category: str | None = None,
+    article_type: str | None = None,
+    tag: str | None = None,
+    featured: bool | None = None,
+    author_id: str | None = None,
 ) -> tuple[int, dict[str, Any]]:
     """List published articles with filters."""
-    articles = Article.objects.filter(status=ArticleStatus.PUBLISHED).select_related(
-        "category", "author", "featured_image"
-    ).prefetch_related("tags")
+    articles = (
+        Article.objects.filter(status=ArticleStatus.PUBLISHED)
+        .select_related("category", "author", "featured_image")
+        .prefetch_related("tags")
+    )
 
     if category:
         articles = articles.filter(category__slug=category)
@@ -444,7 +451,7 @@ def list_articles(
     if featured is not None:
         articles = articles.filter(is_featured=featured)
     if author_id:
-        articles = articles.filter(author_id=author_id)
+        articles = articles.filter(author_id=UUID(author_id))
 
     total = articles.count()
     total_pages = (total + per_page - 1) // per_page
@@ -465,18 +472,20 @@ def list_articles(
 def get_article_by_path(request: HttpRequest, path: str) -> tuple[int, dict[str, Any]]:
     """Get article by full path (category/slug or just slug)."""
     parts = path.strip("/").split("/")
-    
+
     if len(parts) >= 2:
         # Category + slug
         category_slug = parts[-2]
         article_slug = parts[-1]
         try:
-            article = Article.objects.select_related(
-                "category", "author", "featured_image"
-            ).prefetch_related("tags").get(
-                category__slug=category_slug,
-                slug=article_slug,
-                status=ArticleStatus.PUBLISHED,
+            article = (
+                Article.objects.select_related("category", "author", "featured_image")
+                .prefetch_related("tags")
+                .get(
+                    category__slug=category_slug,
+                    slug=article_slug,
+                    status=ArticleStatus.PUBLISHED,
+                )
             )
         except Article.DoesNotExist:
             return 200, {"success": False, "message": "Article not found"}
@@ -484,11 +493,13 @@ def get_article_by_path(request: HttpRequest, path: str) -> tuple[int, dict[str,
         # Just slug
         article_slug = parts[0]
         try:
-            article = Article.objects.select_related(
-                "category", "author", "featured_image"
-            ).prefetch_related("tags").get(
-                slug=article_slug,
-                status=ArticleStatus.PUBLISHED,
+            article = (
+                Article.objects.select_related("category", "author", "featured_image")
+                .prefetch_related("tags")
+                .get(
+                    slug=article_slug,
+                    status=ArticleStatus.PUBLISHED,
+                )
             )
         except Article.DoesNotExist:
             return 200, {"success": False, "message": "Article not found"}
@@ -506,10 +517,12 @@ def get_article_by_path(request: HttpRequest, path: str) -> tuple[int, dict[str,
 def get_article(request: HttpRequest, article_id: str) -> tuple[int, dict[str, Any]]:
     """Get article by ID."""
     try:
-        article = Article.objects.select_related(
-            "category", "author", "featured_image"
-        ).prefetch_related("tags").get(id=article_id)
-        
+        article = (
+            Article.objects.select_related("category", "author", "featured_image")
+            .prefetch_related("tags")
+            .get(id=article_id)
+        )
+
         # Check permissions for non-published articles
         if article.status != ArticleStatus.PUBLISHED:
             if not request.user.is_authenticated:
@@ -517,7 +530,7 @@ def get_article(request: HttpRequest, article_id: str) -> tuple[int, dict[str, A
             profile = get_user_profile(request.user)
             if article.author != request.user and not (profile and profile.can_moderate):
                 return 200, {"success": False, "message": "Article not found"}
-        
+
         return 200, {
             "success": True,
             "article": article_to_response(article),
@@ -534,7 +547,7 @@ def create_article(request: HttpRequest, data: ArticleCreateRequest) -> tuple[in
 
     try:
         profile = get_user_profile(request.user)
-        
+
         # Determine initial status
         if profile and profile.can_publish_directly:
             status = ArticleStatus.PUBLISHED
@@ -542,7 +555,7 @@ def create_article(request: HttpRequest, data: ArticleCreateRequest) -> tuple[in
             status = ArticleStatus.PENDING_REVIEW
 
         slug = data.slug or slugify(data.title)
-        
+
         # Check for duplicate slug in category
         category = None
         if data.category_id:
@@ -552,7 +565,10 @@ def create_article(request: HttpRequest, data: ArticleCreateRequest) -> tuple[in
                 return 200, {"success": False, "message": "Category not found"}
 
         if Article.objects.filter(category=category, slug=slug).exists():
-            return 200, {"success": False, "message": "Article with this slug already exists in the category"}
+            return 200, {
+                "success": False,
+                "message": "Article with this slug already exists in the category",
+            }
 
         with transaction.atomic():
             article = Article.objects.create(
@@ -601,8 +617,11 @@ def create_article(request: HttpRequest, data: ArticleCreateRequest) -> tuple[in
         return 200, {
             "success": True,
             "article": article_to_response(article),
-            "message": "Article created" + (
-                " and published" if status == ArticleStatus.PUBLISHED else " and submitted for review"
+            "message": "Article created"
+            + (
+                " and published"
+                if status == ArticleStatus.PUBLISHED
+                else " and submitted for review"
             ),
         }
     except Exception as e:
@@ -620,7 +639,7 @@ def update_article(
 
     try:
         article = Article.objects.get(id=article_id)
-        
+
         # Check permissions
         profile = get_user_profile(request.user)
         if article.author != request.user and not (profile and profile.can_moderate):
@@ -664,7 +683,7 @@ def update_article(
             if data.tag_ids is not None:
                 tags = Tag.objects.filter(id__in=data.tag_ids)
                 article.tags.set(tags)
-            
+
             if data.category_ids is not None:
                 categories = Category.objects.filter(id__in=data.category_ids)
                 article.categories.set(categories)
@@ -694,7 +713,7 @@ def delete_article(request: HttpRequest, article_id: str) -> tuple[int, dict[str
 
     try:
         article = Article.objects.get(id=article_id)
-        
+
         profile = get_user_profile(request.user)
         if article.author != request.user and not (profile and profile.can_moderate):
             return 200, {"success": False, "message": "Permission denied"}
@@ -716,8 +735,8 @@ def delete_article(request: HttpRequest, article_id: str) -> tuple[int, dict[str
 def search_articles(
     request: HttpRequest,
     q: str,
-    category: Optional[str] = None,
-    article_type: Optional[str] = None,
+    category: str | None = None,
+    article_type: str | None = None,
     page: int = 1,
     per_page: int = 20,
 ) -> tuple[int, dict[str, Any]]:
@@ -725,14 +744,19 @@ def search_articles(
     if not q or len(q) < 2:
         return 200, {"success": False, "message": "Query must be at least 2 characters"}
 
-    articles = Article.objects.filter(
-        status=ArticleStatus.PUBLISHED,
-    ).filter(
-        Q(title__icontains=q) |
-        Q(excerpt__icontains=q) |
-        Q(content__icontains=q) |
-        Q(tags__name__icontains=q)
-    ).distinct().select_related("category", "author", "featured_image")
+    articles = (
+        Article.objects.filter(
+            status=ArticleStatus.PUBLISHED,
+        )
+        .filter(
+            Q(title__icontains=q)
+            | Q(excerpt__icontains=q)
+            | Q(content__icontains=q)
+            | Q(tags__name__icontains=q)
+        )
+        .distinct()
+        .select_related("category", "author", "featured_image")
+    )
 
     if category:
         articles = articles.filter(category__slug=category)
@@ -761,8 +785,8 @@ def search_articles(
 @wiki_router.post("/images/upload", response={200: dict})
 def upload_image(
     request: HttpRequest,
-    file: UploadedFile = File(...),
-    article_id: Optional[str] = None,
+    file: UploadedFile,
+    article_id: str | None = None,
     alt_text: str = "",
 ) -> tuple[int, dict[str, Any]]:
     """Upload an image."""
@@ -776,15 +800,13 @@ def upload_image(
             return 200, {"success": False, "message": "Invalid image type"}
 
         # Validate file size (max 5MB)
-        if file.size > 5 * 1024 * 1024:
+        if file.size is not None and file.size > 5 * 1024 * 1024:
             return 200, {"success": False, "message": "Image too large (max 5MB)"}
 
         article = None
         if article_id:
-            try:
+            with contextlib.suppress(Article.DoesNotExist):
                 article = Article.objects.get(id=article_id)
-            except Article.DoesNotExist:
-                pass
 
         image = ArticleImage.objects.create(
             article=article,
@@ -815,7 +837,7 @@ def resolve_redirect(request: HttpRequest, path: str) -> tuple[int, dict[str, An
     """Resolve a redirect for an old path."""
     # Normalize path
     path = "/" + path.strip("/")
-    
+
     try:
         redirect = Redirect.objects.get(old_path=path)
         redirect.record_hit()
@@ -841,7 +863,7 @@ def resolve_redirect(request: HttpRequest, path: str) -> tuple[int, dict[str, An
                     "redirect_to": article.full_url,
                     "is_permanent": True,
                 }
-        
+
         return 200, {
             "success": False,
             "message": "No redirect found",
@@ -849,7 +871,9 @@ def resolve_redirect(request: HttpRequest, path: str) -> tuple[int, dict[str, An
 
 
 @wiki_router.post("/redirects", response={200: dict})
-def create_redirect(request: HttpRequest, data: RedirectCreateRequest) -> tuple[int, dict[str, Any]]:
+def create_redirect(
+    request: HttpRequest, data: RedirectCreateRequest
+) -> tuple[int, dict[str, Any]]:
     """Create a new redirect."""
     if not request.user.is_authenticated:
         return 200, {"success": False, "message": "Authentication required"}
@@ -867,7 +891,7 @@ def create_redirect(request: HttpRequest, data: RedirectCreateRequest) -> tuple[
                 "notes": data.notes,
             },
         )
-        
+
         if not created:
             redirect.new_path = data.new_path
             redirect.is_permanent = data.is_permanent
@@ -898,9 +922,11 @@ def get_pending_articles(request: HttpRequest) -> tuple[int, dict[str, Any]]:
     if not profile or not profile.can_moderate:
         return 200, {"success": False, "message": "Permission denied"}
 
-    articles = Article.objects.filter(
-        status=ArticleStatus.PENDING_REVIEW
-    ).select_related("category", "author").order_by("created_at")
+    articles = (
+        Article.objects.filter(status=ArticleStatus.PENDING_REVIEW)
+        .select_related("category", "author")
+        .order_by("created_at")
+    )
 
     return 200, {
         "success": True,
@@ -936,16 +962,16 @@ def moderate_article(
             return 200, {"success": False, "message": "Invalid action"}
 
         new_status = action_map[data.action]
-        
+
         with transaction.atomic():
             article.status = new_status
             article.moderation_notes = data.notes
             article.moderator = request.user
             article.moderated_at = timezone.now()
-            
+
             if new_status == ArticleStatus.PUBLISHED and not article.published_at:
                 article.published_at = timezone.now()
-            
+
             article.save()
 
             ModerationLog.objects.create(
@@ -974,7 +1000,7 @@ def moderate_article(
 @wiki_router.get("/my-articles", response={200: dict})
 def get_my_articles(
     request: HttpRequest,
-    status: Optional[str] = None,
+    status: str | None = None,
     page: int = 1,
     per_page: int = 20,
 ) -> tuple[int, dict[str, Any]]:
@@ -1057,19 +1083,19 @@ def get_wiki_profile(request: HttpRequest) -> tuple[int, dict[str, Any]]:
 @wiki_router.put("/me", response={200: dict})
 def update_wiki_profile(
     request: HttpRequest,
-    bio: str = Form(""),
-    website: str = Form(""),
-    github: str = Form(""),
-    twitter: str = Form(""),
-    bluesky: str = Form(""),
-    linkedin: str = Form(""),
-    instagram: str = Form(""),
-    facebook: str = Form(""),
-    devto: str = Form(""),
-    stackoverflow: str = Form(""),
-    youtube: str = Form(""),
-    twitch: str = Form(""),
-    photo: Optional[UploadedFile] = File(None),
+    bio: str = Form[str](""),
+    website: str = Form[str](""),
+    github: str = Form[str](""),
+    twitter: str = Form[str](""),
+    bluesky: str = Form[str](""),
+    linkedin: str = Form[str](""),
+    instagram: str = Form[str](""),
+    facebook: str = Form[str](""),
+    devto: str = Form[str](""),
+    stackoverflow: str = Form[str](""),
+    youtube: str = Form[str](""),
+    twitch: str = Form[str](""),
+    photo: UploadedFile | None = None,
 ) -> tuple[int, dict[str, Any]]:
     """Update current user's wiki profile."""
     if not request.user.is_authenticated:
@@ -1091,17 +1117,20 @@ def update_wiki_profile(
     profile.stackoverflow = stackoverflow
     profile.youtube = youtube
     profile.twitch = twitch
-    
+
     # Handle photo upload
     if photo:
         try:
             # Validate file type
             allowed_types = ["image/jpeg", "image/png", "image/webp"]
             if photo.content_type not in allowed_types:
-                return 200, {"success": False, "message": "Invalid image type (JPEG, PNG, or WebP only)"}
+                return 200, {
+                    "success": False,
+                    "message": "Invalid image type (JPEG, PNG, or WebP only)",
+                }
 
             # Validate file size (max 2MB for profile photos)
-            if photo.size > 2 * 1024 * 1024:
+            if photo.size is not None and photo.size > 2 * 1024 * 1024:
                 return 200, {"success": False, "message": "Image too large (max 2MB)"}
 
             # Delete old photo if exists
@@ -1144,14 +1173,14 @@ def update_wiki_profile(
             "is_staff": request.user.is_staff,
             "is_superuser": request.user.is_superuser,
             "articles_count": profile.articles_count,
-        }
+        },
     }
 
 
 @wiki_router.get("/me/articles", response={200: dict})
-def get_my_articles(
+def get_current_user_articles(
     request: HttpRequest,
-    status: str = None,
+    status: str | None = None,
     page: int = 1,
     per_page: int = 20,
 ) -> tuple[int, dict[str, Any]]:
@@ -1211,7 +1240,7 @@ def get_my_article_stats(request: HttpRequest) -> tuple[int, dict[str, Any]]:
         }
 
     articles = Article.objects.filter(author=request.user)
-    
+
     return 200, {
         "success": True,
         "stats": {
@@ -1236,9 +1265,10 @@ def get_author_profile(request: HttpRequest, user_id: str) -> tuple[int, dict[st
     """Get public profile of an author."""
     try:
         from authentication.models import User
+
         user = User.objects.get(id=user_id)
         profile = get_user_profile(user)
-        
+
         return 200, {
             "success": True,
             "user": {
@@ -1279,6 +1309,7 @@ def get_author_articles(
     """Get all published articles by an author."""
     try:
         from authentication.models import User
+
         user = User.objects.get(id=user_id)
     except Exception as e:
         logger.error("Error fetching author: %s", str(e))
@@ -1290,13 +1321,14 @@ def get_author_articles(
         }
 
     # Get published articles by this author
-    queryset = Article.objects.filter(
-        author=user,
-        status=ArticleStatus.PUBLISHED
-    ).select_related("author", "category").prefetch_related("tags")
+    queryset = (
+        Article.objects.filter(author=user, status=ArticleStatus.PUBLISHED)
+        .select_related("author", "category")
+        .prefetch_related("tags")
+    )
 
     total = queryset.count()
-    
+
     start = (page - 1) * per_page
     end = start + per_page
     articles = queryset.order_by("-created_at")[start:end]
@@ -1304,40 +1336,44 @@ def get_author_articles(
     articles_data = []
     for article in articles:
         profile = get_user_profile(article.author)
-        articles_data.append({
-            "id": str(article.id),
-            "title": article.title,
-            "slug": article.slug,
-            "excerpt": article.excerpt,
-            "content": article.content[:500] if article.content else "",
-            "status": article.status,
-            "article_type": article.article_type,
-            "featured": article.featured,
-            "created_at": article.created_at.isoformat(),
-            "updated_at": article.updated_at.isoformat(),
-            "author": {
-                "id": str(article.author.id),
-                "first_name": article.author.first_name,
-                "last_name": article.author.last_name,
-                "bio": profile.bio if profile else "",
-                "website": profile.website if profile else "",
-                "github": profile.github if profile else "",
-                "twitter": profile.twitter if profile else "",
-            },
-            "category": {
-                "id": str(article.category.id),
-                "name": article.category.name,
-                "slug": article.category.slug,
-            } if article.category else None,
-            "tags": [
-                {
-                    "id": str(tag.id),
-                    "name": tag.name,
-                    "slug": tag.slug,
+        articles_data.append(
+            {
+                "id": str(article.id),
+                "title": article.title,
+                "slug": article.slug,
+                "excerpt": article.excerpt,
+                "content": article.content[:500] if article.content else "",
+                "status": article.status,
+                "article_type": article.article_type,
+                "featured": article.is_featured,
+                "created_at": article.created_at.isoformat(),
+                "updated_at": article.updated_at.isoformat(),
+                "author": {
+                    "id": str(article.author.id) if article.author else "",
+                    "first_name": article.author.first_name if article.author else "",
+                    "last_name": article.author.last_name if article.author else "",
+                    "bio": profile.bio if profile else "",
+                    "website": profile.website if profile else "",
+                    "github": profile.github if profile else "",
+                    "twitter": profile.twitter if profile else "",
+                },
+                "category": {
+                    "id": str(article.category.id),
+                    "name": article.category.name,
+                    "slug": article.category.slug,
                 }
-                for tag in article.tags.all()
-            ],
-        })
+                if article.category
+                else None,
+                "tags": [
+                    {
+                        "id": str(tag.id),
+                        "name": tag.name,
+                        "slug": tag.slug,
+                    }
+                    for tag in article.tags.all()
+                ],
+            }
+        )
 
     return 200, {
         "success": True,
@@ -1352,10 +1388,12 @@ def get_author_articles(
 
 
 @wiki_router.post("/revalidate", response={200: dict})
-def trigger_revalidation(request: HttpRequest, paths: list[str], secret: str) -> tuple[int, dict[str, Any]]:
+def trigger_revalidation(
+    request: HttpRequest, paths: list[str], secret: str
+) -> tuple[int, dict[str, Any]]:
     """Trigger ISR revalidation for given paths."""
     expected_secret = getattr(settings, "REVALIDATION_SECRET", None)
-    
+
     if not expected_secret or secret != expected_secret:
         return 200, {"success": False, "message": "Invalid secret"}
 
@@ -1376,9 +1414,9 @@ def trigger_revalidation(request: HttpRequest, paths: list[str], secret: str) ->
 @wiki_router.get("/sitemap", response={200: dict})
 def get_sitemap_data(request: HttpRequest) -> tuple[int, dict[str, Any]]:
     """Get data for sitemap generation."""
-    articles = Article.objects.filter(
-        status=ArticleStatus.PUBLISHED
-    ).values("slug", "category__slug", "updated_at", "article_type")
+    articles = Article.objects.filter(status=ArticleStatus.PUBLISHED).values(
+        "slug", "category__slug", "updated_at", "article_type"
+    )
 
     categories = Category.objects.filter(is_active=True).values("slug", "updated_at")
 
@@ -1386,7 +1424,9 @@ def get_sitemap_data(request: HttpRequest) -> tuple[int, dict[str, Any]]:
         "success": True,
         "articles": [
             {
-                "url": f"/{a['category__slug']}/{a['slug']}" if a["category__slug"] else f"/articles/{a['slug']}",
+                "url": f"/{a['category__slug']}/{a['slug']}"
+                if a["category__slug"]
+                else f"/articles/{a['slug']}",
                 "lastModified": a["updated_at"].isoformat(),
                 "changeFrequency": "weekly" if a["article_type"] == "documentation" else "monthly",
                 "priority": 0.8 if a["article_type"] == "documentation" else 0.6,

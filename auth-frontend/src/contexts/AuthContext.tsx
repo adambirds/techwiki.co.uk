@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import {authApi} from "@/utils/api";
+import {authApi, ensureCsrfToken} from "@/utils/api";
 import React, {
     createContext,
     useCallback,
@@ -43,14 +43,19 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
     const [challengeToken, setChallengeToken] = useState<string | null>(null);
 
     const refreshUser = useCallback(async () => {
+        console.log("[AUTH] Fetching current user");
         try {
             const data = await authApi.getCurrentUser();
+            console.log("[AUTH] Current user response:", data);
             if (data.success && data.user) {
+                console.log("[AUTH] User authenticated:", data.user.email);
                 setUser(data.user);
             } else {
+                console.log("[AUTH] User not authenticated");
                 setUser(null);
             }
-        } catch {
+        } catch (err) {
+            console.error("[AUTH] Error fetching user:", err);
             setUser(null);
         } finally {
             setLoading(false);
@@ -58,11 +63,15 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
     }, []);
 
     useEffect(() => {
+        // Initialize CSRF token on app startup
+        ensureCsrfToken().catch(console.error);
         refreshUser();
     }, [refreshUser]);
 
     const login = async (email: string, password: string) => {
+        console.log("[AUTH] Starting login for:", email);
         const data = await authApi.login(email, password);
+        console.log("[AUTH] Login response:", data);
 
         if (!data.success) {
             throw new Error(data.message || "Login failed");
@@ -70,12 +79,15 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
 
         // Check if 2FA is required
         if (data.requires2fa && data.challengeToken) {
+            console.log("[AUTH] 2FA required");
             setChallengeToken(data.challengeToken);
             setRequires2fa(true);
             return;
         }
 
+        console.log("[AUTH] Refreshing user after login");
         await refreshUser();
+        console.log("[AUTH] Login complete");
     };
 
     const loginWithPasskey = async () => {

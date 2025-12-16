@@ -46,7 +46,7 @@ if DEBUG:
 SITE_DOMAIN = os.environ.get("SITE_DOMAIN", "localhost")
 
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
-AUTH_FRONTEND_URL = os.environ.get("AUTH_FRONTEND_URL", "http://localhost:5174")
+AUTH_FRONTEND_URL = os.environ.get("AUTH_FRONTEND_URL", "http://localhost:5175")
 
 if not SITE_DOMAIN:
     raise ValueError("SITE_DOMAIN must be set.")
@@ -59,22 +59,11 @@ else:
     ]
 
 
-WEDDING_PHOTO_UPLOAD_PASSWORD = os.environ.get("WEDDING_PHOTO_UPLOAD_PASSWORD", None)
-
-# OneDrive/SharePoint configuration for video uploads
-# Register an Azure AD application with Files.ReadWrite.All permission
-ONEDRIVE_CLIENT_ID = os.environ.get("ONEDRIVE_CLIENT_ID", None)
-ONEDRIVE_CLIENT_SECRET = os.environ.get("ONEDRIVE_CLIENT_SECRET", None)
-ONEDRIVE_TENANT_ID = os.environ.get("ONEDRIVE_TENANT_ID", None)
-# For SharePoint, use the drive ID. For personal OneDrive, use 'me'
-ONEDRIVE_DRIVE_ID = os.environ.get("ONEDRIVE_DRIVE_ID", None)
-# Folder path in OneDrive where videos will be uploaded
-ONEDRIVE_FOLDER_PATH = os.environ.get("ONEDRIVE_FOLDER_PATH", "WeddingVideos")
-
-
 # Application definition
 
 INSTALLED_APPS = [
+    "apps.wiki",
+    "apps.analytics",
     "authentication",
     "corsheaders",
     "unfold",  # before django.contrib.admin
@@ -116,6 +105,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "ninja.compatibility.files.fix_request_files_middleware",
 ]
 
 if DEBUG_TOOLBAR_ENABLED:
@@ -245,7 +235,7 @@ if DEBUG:
     CORS_ALLOWED_ORIGINS += [
         "http://localhost:3000",
         "http://localhost:5173",
-        "http://localhost:5174",
+        "http://localhost:5175",
     ]
 
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
@@ -298,3 +288,5 @@ CACHES = {
 if DEBUG:
     SESSION_COOKIE_SAMESITE = "None"
     SESSION_COOKIE_SECURE = True
+    # Disable rate limiting in development since Redis might not be available
+    RATE_LIMIT_DISABLED = True

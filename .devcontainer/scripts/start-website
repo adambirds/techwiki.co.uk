@@ -10,4 +10,4 @@ fi
 cd /workspace/website
 
 echo "🚀 Starting Next.js website development server..."
-pnpm run dev -- --port 3000
+pnpm run dev

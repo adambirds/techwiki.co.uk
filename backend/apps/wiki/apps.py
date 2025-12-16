@@ -1,0 +1,11 @@
+"""Wiki app configuration."""
+
+from django.apps import AppConfig
+
+
+class WikiConfig(AppConfig):
+    """Configuration for the wiki app."""
+
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.wiki"
+    verbose_name = "TechWiki"

@@ -28,27 +28,6 @@ if [ ! -f .devcontainer/.env ]; then
 	echo "Please update .devcontainer/.env with your actual credentials"
 fi
 
-# Create .envs directory if it doesn't exist
-mkdir -p .envs
-
-# Create .env file if it doesn't exist
-if [ ! -f .envs/.dev ]; then
-	echo "Creating development environment file..."
-	cp .envs/.dev-example .envs/.dev 2>/dev/null || cat >.envs/.dev <<'EOF'
-DEBUG=1
-
-SECRET_KEY=dev-secret-key-for-devcontainer-please-change-in-production
-SMTP_ENCRYPTION_KEY=I_DmQkoiAXfmF31CN_6L1o6raLaVIMjczZ-1LLElrGw=
-
-SQL_ENGINE=django.db.backends.postgresql
-SQL_DATABASE=techwiki_dev
-SQL_USER=techwiki
-SQL_PASSWORD=techwiki_dev_password
-SQL_HOST=db
-SQL_PORT=5432
-EOF
-fi
-
 echo "Installing frontend dependencies..."
 pnpm install
 cd /workspace/website && pnpm install

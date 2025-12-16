@@ -111,6 +111,26 @@
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
+
+    /* Ensure no black text appears on dark background */
+    body {
+        color: #e5e7eb;
+    }
+
+    /* Prevent black text in all elements */
+    input,
+    textarea,
+    select,
+    button,
+    option {
+        color: inherit;
+    }
+
+    /* Ensure inputs inherit light text color */
+    input::placeholder,
+    textarea::placeholder {
+        color: #9ca3af;
+    }
 }
 
 @utility h-40vw {
@@ -131,4 +151,245 @@
     font-weight: 100 900;
     font-display: swap;
     src: url("/fonts/InterVariable-Italic.woff2") format("woff2");
+}
+
+/* Prism.js syntax highlighting theme - One Dark */
+code[class*="language-"],
+pre[class*="language-"] {
+    color: #abb2bf;
+    background: none;
+    font-family:
+        ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.875em;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    word-wrap: normal;
+    line-height: 1.6;
+    tab-size: 4;
+    hyphens: none;
+}
+
+pre[class*="language-"] {
+    padding: 1em;
+    margin: 0.5em 0;
+    overflow: auto;
+    border-radius: 0.5rem;
+    background: #1e1e2e;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+    color: #6a737d;
+}
+
+.token.punctuation {
+    color: #abb2bf;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+    color: #e06c75;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+    color: #98c379;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+    color: #56b6c2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+    color: #c678dd;
+}
+
+.token.function,
+.token.class-name {
+    color: #61afef;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+    color: #d19a66;
+}
+
+/* Prose styles for Markdown content */
+.prose {
+    color: #e5e7eb;
+    line-height: 1.75;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+    color: #fff;
+    font-weight: 700;
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+}
+
+.prose h1 {
+    font-size: 2.25em;
+}
+
+.prose h2 {
+    font-size: 1.5em;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid #374151;
+}
+
+.prose h3 {
+    font-size: 1.25em;
+}
+
+.prose p {
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+}
+
+.prose a {
+    color: #60a5fa;
+    text-decoration: underline;
+}
+
+.prose a:hover {
+    color: #93c5fd;
+}
+
+.prose strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+.prose code {
+    color: #f472b6;
+    background-color: #1f2937;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+}
+
+.prose pre {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 0.5rem;
+    padding: 1.25em;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+    overflow-x: auto;
+}
+
+.prose pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    color: #e5e7eb;
+    font-size: 0.875em;
+    line-height: 1.7;
+}
+
+.prose ul,
+.prose ol {
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+    padding-left: 1.5em;
+}
+
+.prose ul {
+    list-style-type: disc;
+}
+
+.prose ol {
+    list-style-type: decimal;
+}
+
+.prose li {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.prose li > p {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.prose blockquote {
+    border-left: 4px solid #3b82f6;
+    padding-left: 1em;
+    margin-left: 0;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+    color: #9ca3af;
+    font-style: italic;
+    background-color: #1f2937;
+    padding: 1em;
+    border-radius: 0.25rem;
+}
+
+.prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+.prose th,
+.prose td {
+    border: 1px solid #374151;
+    padding: 0.5em 1em;
+}
+
+.prose th {
+    background-color: #1f2937;
+    font-weight: 600;
+    text-align: left;
+}
+
+.prose tr:nth-child(even) {
+    background-color: rgba(31, 41, 55, 0.3);
+}
+
+.prose img {
+    border-radius: 0.5rem;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+.prose hr {
+    border-color: #374151;
+    margin-top: 2em;
+    margin-bottom: 2em;
+}
+
+/* Mermaid diagram styles */
+.mermaid-diagram svg {
+    max-width: 100%;
+    height: auto;
 }

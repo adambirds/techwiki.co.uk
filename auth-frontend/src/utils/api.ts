@@ -1,9 +1,13 @@
 import {API_URL} from "./config";
 
+// Store CSRF token in memory as fallback
+let storedCsrfToken: string | null = null;
+
 /**
  * Get the CSRF token from cookies.
  */
 function getCsrfToken(): string | null {
+    // First check cookies
     const cookies = document.cookie.split(";");
     for (const cookie of cookies) {
         const [name, value] = cookie.trim().split("=");
@@ -11,7 +15,15 @@ function getCsrfToken(): string | null {
             return value;
         }
     }
-    return null;
+    // Fall back to stored token
+    return storedCsrfToken;
+}
+
+/**
+ * Set the CSRF token in memory.
+ */
+function setCsrfToken(token: string): void {
+    storedCsrfToken = token;
 }
 
 /**
@@ -31,23 +43,50 @@ export async function fetchWithCSRF(
         headers["X-CSRFToken"] = csrfToken;
     }
 
-    return fetch(url, {
+    console.log("[FETCH] Making request", {
+        url,
+        method: options.method,
+        csrfToken: csrfToken ? "SET" : "NOT SET",
+        headers,
+    });
+
+    const response = await fetch(url, {
         ...options,
         headers,
         credentials: "include", // Always include cookies
     });
+
+    console.log("[FETCH] Got response", {url, status: response.status});
+    return response;
 }
 
 /**
  * Ensure CSRF token is available before making requests.
  */
 export async function ensureCsrfToken(): Promise<void> {
-    const csrfToken = getCsrfToken();
-    if (!csrfToken) {
-        // Fetch CSRF token from the server
-        await fetch(`${API_URL}/api/auth/csrf`, {
+    try {
+        // Always fetch to ensure the CSRF cookie is set
+        const response = await fetch(`${API_URL}/api/auth/csrf`, {
+            method: "GET",
             credentials: "include",
         });
+
+        if (!response.ok) {
+            throw new Error(`Failed to get CSRF token: ${response.status}`);
+        }
+
+        // Try to extract token from response
+        try {
+            const data = await response.json();
+            if (data.token) {
+                setCsrfToken(data.token);
+            }
+        } catch {
+            // Response might not be JSON, that's ok
+        }
+    } catch (error) {
+        console.error("Error fetching CSRF token:", error);
+        // Continue anyway - might already be set
     }
 }
 
@@ -68,8 +107,14 @@ export const authApi = {
         challengeToken?: string;
         user?: unknown;
     }> {
+        console.log("[API] Ensuring CSRF token");
         await ensureCsrfToken();
+        console.log("[API] CSRF token ensured");
 
+        console.log("[API] Making login request", {
+            url: `${API_URL}/api/auth-service/login`,
+            email,
+        });
         const response = await fetchWithCSRF(
             `${API_URL}/api/auth-service/login`,
             {
@@ -81,7 +126,10 @@ export const authApi = {
             },
         );
 
-        return response.json();
+        console.log("[API] Got login response", response.status);
+        const data = await response.json();
+        console.log("[API] Parsed login response", data);
+        return data;
     },
 
     /**

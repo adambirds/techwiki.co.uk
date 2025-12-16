@@ -39,13 +39,30 @@ class GraphQL400LoggerMiddleware:
             receive: An awaitable callable to receive events.
             send: An awaitable callable to send events.
         """
+        path = scope.get("path", "")
+        method = scope.get("method", "")
+        logger.info(f"[ASGI] Received {method} {path}")
+        
         if scope.get("type") != "http" or scope.get("path") != "/graphql/":
             # The wrapped app (self.app) has a signature that mypy infers from
             # Django, which is slightly different from the standard ASGIApp.
             # We ignore the type error because we know they are compatible in practice.
-            await self.app(scope, receive, send)  # type: ignore[arg-type]
+            logger.info(f"[ASGI] Passing to Django: {method} {path}")
+            
+            # Wrap send to log when response is sent
+            async def wrapped_send(message: Message) -> None:
+                if message["type"] == "http.response.start":
+                    logger.info(f"[ASGI] Sending response start for: {method} {path} - status: {message.get('status')}")
+                elif message["type"] == "http.response.body":
+                    logger.info(f"[ASGI] Sending response body for: {method} {path}")
+                await send(message)
+            
+            logger.info(f"[ASGI] About to call Django app for: {method} {path}")
+            await self.app(scope, receive, wrapped_send)  # type: ignore[arg-type]
+            logger.info(f"[ASGI] Django returned for: {method} {path}")
             return
 
+        logger.info(f"[ASGI] Processing GraphQL request")
         body: bytes = b""
         more_body: bool = True
         received_messages: list[Message] = []

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { GoogleAdSenseScript } from "@/lib/analytics/AdSense";
+import { GoogleAnalytics } from "@/lib/analytics/GoogleAnalytics";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -34,7 +36,11 @@ export default async function RootLayout({
                     content="picture-in-picture '*'"
                 />
             </head>
-            <body className="h-full bg-[#1c324a]">{children}</body>
+            <body className="h-full bg-[#1c324a] text-gray-200">
+                <GoogleAnalytics />
+                <GoogleAdSenseScript />
+                {children}
+            </body>
         </html>
     );
 }

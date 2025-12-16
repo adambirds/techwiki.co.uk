@@ -88,43 +88,48 @@ def check_rate_limit(
     Returns:
         Tuple of (is_allowed, remaining_requests, retry_after_seconds)
     """
-    now = time.time()
-    
-    # Check if currently blocked
-    block_key = f"{key}:blocked"
-    blocked_until = cache.get(block_key)
-    if blocked_until and now < blocked_until:
-        retry_after = int(blocked_until - now)
-        return False, 0, retry_after
+    try:
+        now = time.time()
+        
+        # Check if currently blocked
+        block_key = f"{key}:blocked"
+        blocked_until = cache.get(block_key)
+        if blocked_until and now < blocked_until:
+            retry_after = int(blocked_until - now)
+            return False, 0, retry_after
 
-    # Get current request timestamps
-    timestamps_key = f"{key}:timestamps"
-    timestamps: list[float] = cache.get(timestamps_key, [])
-    
-    # Remove expired timestamps
-    window_start = now - config.window
-    timestamps = [ts for ts in timestamps if ts > window_start]
-    
-    # Check if limit exceeded
-    if len(timestamps) >= config.requests:
-        # Calculate when the oldest request will expire
-        oldest = min(timestamps)
-        retry_after = int(config.window - (now - oldest)) + 1
+        # Get current request timestamps
+        timestamps_key = f"{key}:timestamps"
+        timestamps: list[float] = cache.get(timestamps_key, [])
         
-        # Block if configured
-        if config.block_duration > 0:
-            cache.set(block_key, now + config.block_duration, config.block_duration)
-            retry_after = config.block_duration
-            logger.warning("Rate limit exceeded and blocked for key: %s", key)
+        # Remove expired timestamps
+        window_start = now - config.window
+        timestamps = [ts for ts in timestamps if ts > window_start]
         
-        return False, 0, retry_after
-    
-    # Add current request
-    timestamps.append(now)
-    cache.set(timestamps_key, timestamps, config.window + 60)  # Extra buffer
-    
-    remaining = config.requests - len(timestamps)
-    return True, remaining, 0
+        # Check if limit exceeded
+        if len(timestamps) >= config.requests:
+            # Calculate when the oldest request will expire
+            oldest = min(timestamps)
+            retry_after = int(config.window - (now - oldest)) + 1
+            
+            # Block if configured
+            if config.block_duration > 0:
+                cache.set(block_key, now + config.block_duration, config.block_duration)
+                retry_after = config.block_duration
+                logger.warning("Rate limit exceeded and blocked for key: %s", key)
+            
+            return False, 0, retry_after
+        
+        # Add current request
+        timestamps.append(now)
+        cache.set(timestamps_key, timestamps, config.window + 60)  # Extra buffer
+        
+        remaining = config.requests - len(timestamps)
+        return True, remaining, 0
+    except Exception as e:
+        logger.exception("Rate limit check error: %s", e)
+        # On error, allow the request through to avoid blocking legitimate traffic
+        return True, 0, 0
 
 
 def rate_limit(

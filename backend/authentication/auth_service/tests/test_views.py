@@ -69,8 +69,22 @@ class AuthServiceLoginTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertFalse(data["success"])
-        # Django's authenticate returns None for inactive users, so we get "incorrect" message
-        self.assertIn("incorrect", data["message"].lower())
+        self.assertIn("deactivated", data["message"].lower())
+
+    def test_login_requires_verified_email(self) -> None:
+        self.user.email_verified = False
+        self.user.save(update_fields=["email_verified"])
+
+        response = self.client.post(
+            "/api/auth-service/login",
+            data=json.dumps({"email": "test@example.com", "password": "testpass123"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data["success"])
+        self.assertEqual(data["code"], "email_not_verified")
 
     def test_login_requires_2fa(self) -> None:
         """Test login when 2FA is enabled."""
@@ -263,6 +277,43 @@ class AuthServiceVerifyEmailTestCase(TestCase):
         self.assertFalse(data["success"])
 
 
+class AuthServiceResendVerificationTestCase(TestCase):
+    @patch("authentication.auth_service.views.send_verification_email")
+    def test_resend_rotates_token_for_unverified_user(self, mock_send_email: MagicMock) -> None:
+        user = User.objects.create_user(
+            email="unverified@example.com",
+            password="testpass123",
+            first_name="Unverified",
+            last_name="User",
+        )
+        original_token = user.verification_token
+
+        response = self.client.post(
+            "/api/auth-service/resend-verification",
+            data=json.dumps({"email": user.email}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["success"])
+        user.refresh_from_db()
+        self.assertNotEqual(user.verification_token, original_token)
+        self.assertIsNotNone(user.last_verification_email_sent)
+        mock_send_email.assert_called_once_with(user)
+
+    @patch("authentication.auth_service.views.send_verification_email")
+    def test_resend_does_not_reveal_unknown_account(self, mock_send_email: MagicMock) -> None:
+        response = self.client.post(
+            "/api/auth-service/resend-verification",
+            data=json.dumps({"email": "missing@example.com"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["success"])
+        mock_send_email.assert_not_called()
+
+
 class AuthService2FATestCase(TestCase):
     """Tests for 2FA endpoints."""
 
@@ -361,8 +412,8 @@ class AuthServicePasswordTestCase(TestCase):
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password("newpassword123"))
 
-    @patch("authentication.auth_service.views.send_mail")
-    def test_forgot_password(self, mock_send_mail: MagicMock) -> None:
+    @patch("authentication.auth_service.views.send_password_reset_email")
+    def test_forgot_password(self, mock_send_password_reset_email: MagicMock) -> None:
         """Test forgot password request."""
         response = self.client.post(
             "/api/auth-service/forgot-password",

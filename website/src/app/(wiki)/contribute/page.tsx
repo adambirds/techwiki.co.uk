@@ -81,7 +81,7 @@ export default function ContributePage() {
                                     repository.
                                 </p>
                                 <a
-                                    href="https://github.com/adb-software-solutions"
+                                    href="https://github.com/adb-software-solutions/techwiki.co.uk/issues"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-block rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-300 transition-colors hover:border-gray-500 hover:text-white"

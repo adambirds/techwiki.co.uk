@@ -6,6 +6,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import LoginPage from "./pages/LoginPage";
 import LogoutPage from "./pages/LogoutPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import ResendVerificationPage from "./pages/ResendVerificationPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SecuritySettingsPage from "./pages/SecuritySettingsPage";
 import Setup2FAPage from "./pages/Setup2FAPage";
@@ -26,6 +27,10 @@ export default function App() {
                         <Route
                             path="/verify-email/:token"
                             element={<VerifyEmailPage />}
+                        />
+                        <Route
+                            path="/resend-verification"
+                            element={<ResendVerificationPage />}
                         />
                         <Route
                             path="/forgot-password"

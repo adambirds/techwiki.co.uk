@@ -11,7 +11,7 @@
         "ghcr.io/devcontainers/features/github-cli:1": {},
         "ghcr.io/devcontainers/features/node:1": {
             "nodeGypDependencies": true,
-            "version": "20"
+            "version": "22"
         },
         "ghcr.io/devcontainers/features/python:1": {
             "version": "3.12",
@@ -60,7 +60,10 @@
                 "tomoki1207.pdf",
 
                 // Markdown/Documentation
-                "unifiedjs.vscode-mdx"
+                "unifiedjs.vscode-mdx",
+
+                // AI Tools
+                "openai.chatgpt"
             ],
             "settings": {
                 "python.defaultInterpreterPath": "/opt/venv/bin/python",

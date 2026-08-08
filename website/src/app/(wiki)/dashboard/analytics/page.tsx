@@ -230,10 +230,13 @@ export default function AnalyticsDashboardPage() {
             try {
                 setLoading(true);
                 const [dashboardRes, realtimeRes] = await Promise.all([
-                    fetch(`${API_BASE}/analytics/dashboard?period=${period}`, {
-                        credentials: "include",
-                    }),
-                    fetch(`${API_BASE}/analytics/realtime`, {
+                    fetch(
+                        `${API_BASE}/api/analytics/dashboard?period=${period}`,
+                        {
+                            credentials: "include",
+                        },
+                    ),
+                    fetch(`${API_BASE}/api/analytics/realtime`, {
                         credentials: "include",
                     }),
                 ]);
@@ -261,7 +264,7 @@ export default function AnalyticsDashboardPage() {
         // Refresh realtime data every 30 seconds
         const interval = setInterval(async () => {
             try {
-                const res = await fetch(`${API_BASE}/analytics/realtime`, {
+                const res = await fetch(`${API_BASE}/api/analytics/realtime`, {
                     credentials: "include",
                 });
                 if (res.ok) {

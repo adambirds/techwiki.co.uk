@@ -215,6 +215,29 @@ export const authApi = {
     },
 
     /**
+     * Resend an account verification email.
+     */
+    async resendVerification(email: string): Promise<{
+        success: boolean;
+        message?: string;
+    }> {
+        await ensureCsrfToken();
+
+        const response = await fetchWithCSRF(
+            `${API_URL}/api/auth-service/resend-verification`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({email}),
+            },
+        );
+
+        return response.json();
+    },
+
+    /**
      * Verify email with token.
      */
     async verifyEmail(token: string): Promise<{

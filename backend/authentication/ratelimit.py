@@ -38,6 +38,7 @@ RATE_LIMITS = {
     "2fa_verify": RateLimitConfig(requests=5, window=300, block_duration=300),
     # Email verification: 5 requests per hour
     "email_verify": RateLimitConfig(requests=5, window=3600, block_duration=0),
+    "resend_verification": RateLimitConfig(requests=3, window=3600, block_duration=0),
     # Passkey discovery auth: 10 per minute per IP
     "passkey_discover": RateLimitConfig(requests=10, window=60, block_duration=60),
     # API general: 100 requests per minute

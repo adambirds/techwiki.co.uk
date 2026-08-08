@@ -1,0 +1,8 @@
+{
+    "mcpServers": {
+        "dependency-updater": {
+            "command": "python",
+            "args": ["/workspace/dep_updater_server.py"]
+        }
+    }
+}

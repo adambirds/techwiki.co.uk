@@ -79,10 +79,12 @@ export function ArticleCard({
 
     if (variant === "featured") {
         return (
-            <Link
-                href={href}
-                className="group relative block overflow-hidden rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 transition-colors hover:from-gray-700 hover:to-gray-800"
-            >
+            <article className="group relative block overflow-hidden rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 transition-colors hover:from-gray-700 hover:to-gray-800">
+                <Link
+                    href={href}
+                    aria-label={`Read ${article.title}`}
+                    className="absolute inset-0 z-10 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+                />
                 {article.featured_image_url && (
                     <div className="relative h-48 overflow-hidden">
                         <Image
@@ -118,8 +120,7 @@ export function ArticleCard({
                         {article.author ? (
                             <Link
                                 href={`/authors/${article.author.id}`}
-                                className="flex items-center gap-2 transition-colors hover:text-blue-400"
-                                onClick={(e) => e.stopPropagation()}
+                                className="relative z-20 flex items-center gap-2 transition-colors hover:text-blue-400"
                             >
                                 {getPhotoUrl(article.author.photo) ? (
                                     <Image
@@ -148,16 +149,18 @@ export function ArticleCard({
                         </div>
                     </div>
                 </div>
-            </Link>
+            </article>
         );
     }
 
     // Default variant
     return (
-        <Link
-            href={href}
-            className="group block rounded-xl border border-gray-700/50 bg-gray-800/50 p-6 transition-colors hover:border-gray-600 hover:bg-gray-800"
-        >
+        <article className="group relative block rounded-xl border border-gray-700/50 bg-gray-800/50 p-6 transition-colors hover:border-gray-600 hover:bg-gray-800">
+            <Link
+                href={href}
+                aria-label={`Read ${article.title}`}
+                className="absolute inset-0 z-10 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+            />
             <div className="mb-3 flex items-center gap-2">
                 <span
                     className={`rounded px-2 py-1 text-xs font-medium ${ARTICLE_TYPE_COLORS[article.article_type] || "bg-gray-500/20 text-gray-400"}`}
@@ -181,8 +184,7 @@ export function ArticleCard({
                 {article.author ? (
                     <Link
                         href={`/authors/${article.author.id}`}
-                        className="flex items-center gap-2 transition-colors hover:text-blue-400"
-                        onClick={(e) => e.stopPropagation()}
+                        className="relative z-20 flex items-center gap-2 transition-colors hover:text-blue-400"
                     >
                         {getPhotoUrl(article.author.photo) ? (
                             <Image
@@ -207,7 +209,7 @@ export function ArticleCard({
                     <span>{article.reading_time} min read</span>
                 </div>
             </div>
-        </Link>
+        </article>
     );
 }
 

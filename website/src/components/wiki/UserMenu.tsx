@@ -130,6 +130,15 @@ export function UserMenu() {
                             >
                                 Dashboard
                             </Link>
+                            {(user.isStaff || user.isSuperuser) && (
+                                <Link
+                                    href="/dashboard/admin"
+                                    className="block px-4 py-2 text-sm text-blue-300 hover:bg-gray-700/50 hover:text-blue-200"
+                                    onClick={() => setMenuOpen(false)}
+                                >
+                                    Admin Dashboard
+                                </Link>
+                            )}
                             <Link
                                 href="/dashboard/articles"
                                 className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white"

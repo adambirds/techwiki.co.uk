@@ -9,8 +9,12 @@ import {
     FingerPrintIcon,
 } from "@heroicons/react/24/solid";
 import {useEffect, useState} from "react";
+import {useSearchParams} from "react-router-dom";
 
 export default function LoginPage() {
+    const [searchParams] = useSearchParams();
+    const verificationSent =
+        searchParams.get("message") === "verification-sent";
     const {user, login, loginWithPasskey, requires2fa, verify2fa, cancel2fa} =
         useAuth();
     const [email, setEmail] = useState("");
@@ -141,6 +145,13 @@ export default function LoginPage() {
                 Sign in to your account
             </h2>
 
+            {verificationSent && (
+                <Alert type="info" className="mt-6">
+                    Account created. Check your inbox and verify your email
+                    before signing in.
+                </Alert>
+            )}
+
             {error && (
                 <Alert type="error" className="mt-6">
                     {error}
@@ -206,12 +217,20 @@ export default function LoginPage() {
                             >
                                 Password
                             </label>
-                            <a
-                                href="/forgot-password"
-                                className="text-brand text-sm font-semibold hover:underline"
-                            >
-                                Forgot password?
-                            </a>
+                            <div className="flex gap-3">
+                                <a
+                                    href="/resend-verification"
+                                    className="text-brand text-sm font-semibold hover:underline"
+                                >
+                                    Verify email
+                                </a>
+                                <a
+                                    href="/forgot-password"
+                                    className="text-brand text-sm font-semibold hover:underline"
+                                >
+                                    Forgot password?
+                                </a>
+                            </div>
                         </div>
                         <div className="relative mt-2">
                             <input

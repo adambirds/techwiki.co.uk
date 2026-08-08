@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from apps.analytics.views import router as analytics_router
 from apps.wiki.views import wiki_router
+from authentication.admin_api import router as admin_router
 from authentication.auth_service.views import auth_service_router
 from authentication.ninja.views import auth_router
 from authentication.sessions.views import sessions_router
@@ -23,6 +24,7 @@ api = NinjaAPI(
 
 # Register nested routers
 api.add_router("/auth", auth_router)  # Admin auth (staff/superuser only)
+api.add_router("/admin", admin_router)  # Admin dashboard and user management
 api.add_router("/auth-service", auth_service_router)  # User auth (registration, login, 2FA, etc.)
 api.add_router("/sessions", sessions_router)  # Session/device management
 api.add_router("/wiki", wiki_router)  # Wiki/documentation platform

@@ -235,6 +235,29 @@ export default function DashboardPage() {
                 </div>
             )}
 
+            {/* Admin Section */}
+            {(user?.isStaff || user?.isSuperuser) && (
+                <div className="rounded-lg border border-cyan-700/50 bg-cyan-900/20 p-4">
+                    <div className="flex items-center gap-3">
+                        <span className="text-2xl">⚙️</span>
+                        <div className="flex-1">
+                            <h3 className="font-medium text-cyan-300">
+                                Administration
+                            </h3>
+                            <p className="text-sm text-cyan-200/70">
+                                Manage users, roles, access, and site analytics.
+                            </p>
+                        </div>
+                        <Link
+                            href="/dashboard/admin"
+                            className="text-sm text-cyan-300 hover:text-cyan-200"
+                        >
+                            Open admin →
+                        </Link>
+                    </div>
+                </div>
+            )}
+
             {/* Recent Articles */}
             <div>
                 <div className="mb-4 flex items-center justify-between">

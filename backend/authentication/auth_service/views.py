@@ -25,13 +25,14 @@ from typing import Any
 
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
-from django.core.mail import send_mail
 from django.db import transaction
 from django.http import HttpRequest
 from django.middleware.csrf import get_token
 from django.utils import timezone
 from ninja import Router, Schema
 
+from authentication.email_service import send_password_reset_email
+from authentication.email_service import send_verification_email as send_graph_verification_email
 from authentication.passkeys.models import Passkey, PasskeyAuthenticationLog, PasskeyChallenge
 from authentication.passkeys.utils import (
     base64url_to_bytes,
@@ -88,6 +89,12 @@ class VerifyEmailRequest(Schema):
     """Email verification request schema."""
 
     token: str
+
+
+class ResendVerificationRequest(Schema):
+    """Resend verification request schema."""
+
+    email: str
 
 
 class Verify2FARequest(Schema):
@@ -178,32 +185,8 @@ def transform_user_response(user: Any) -> dict[str, Any]:
 
 
 def send_verification_email(user: Any) -> None:
-    """Send email verification email."""
-    verification_url = f"{settings.FRONTEND_URL}/verify-email/{user.verification_token}"
-
-    # Try to use the auth frontend URL if available
-    auth_frontend_url = getattr(settings, "AUTH_FRONTEND_URL", None)
-    if auth_frontend_url:
-        verification_url = f"{auth_frontend_url}/verify-email/{user.verification_token}"
-
-    send_mail(
-        subject="Verify your TechWiki email",
-        message=f"""
-Hi {user.first_name},
-
-Please click the link below to verify your email address:
-
-{verification_url}
-
-If you didn't create an account, you can ignore this email.
-
-Thanks,
-The TechWiki Team
-        """.strip(),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
-    )
+    """Send an email verification message through Microsoft Graph."""
+    send_graph_verification_email(user)
 
 
 # ============================================================================
@@ -255,7 +238,21 @@ def auth_login(request: HttpRequest, data: LoginRequest) -> tuple[int, dict[str,
         user = authenticate(request, username=data.email, password=data.password)
 
         if user is None:
-            # Record failed attempt
+            candidate = User.objects.filter(email__iexact=data.email.strip()).first()
+            if candidate and candidate.check_password(data.password):
+                if not candidate.is_active:
+                    return 200, {
+                        "success": False,
+                        "message": "This account has been deactivated.",
+                    }
+                if not candidate.email_verified:
+                    return 200, {
+                        "success": False,
+                        "code": "email_not_verified",
+                        "message": "Verify your email address before signing in.",
+                    }
+
+            # Record only genuinely invalid credentials as failed attempts
             record_failed_attempt("login_ip", client_ip)
             record_failed_attempt("login_account", data.email.lower())
             return 200, {
@@ -395,7 +392,8 @@ def auth_register(request: HttpRequest, data: RegisterRequest) -> tuple[int, dic
                 last_name=data.last_name.strip(),
             )
             user.verification_token = uuid.uuid4()
-            user.save()
+            user.last_verification_email_sent = timezone.now()
+            user.save(update_fields=["verification_token", "last_verification_email_sent"])
 
             # Log referral if provided (will be added to Stripe customer metadata later)
             if data.referral:
@@ -459,6 +457,43 @@ def verify_email(request: HttpRequest, data: VerifyEmailRequest) -> tuple[int, d
         }
 
 
+@auth_service_router.post("/resend-verification", response={200: dict, 429: dict})
+def resend_verification_email(
+    request: HttpRequest,
+    data: ResendVerificationRequest,
+) -> tuple[int, dict[str, Any]]:
+    """Issue a fresh token and resend verification without revealing account existence."""
+    client_ip = _get_client_ip(request)
+    ip_allowed, ip_message, ip_retry = check_rate_limit_for_request(
+        request, "resend_verification", client_ip
+    )
+    email_allowed, email_message, email_retry = check_rate_limit_for_request(
+        request, "resend_verification", data.email.strip().lower()
+    )
+    if not ip_allowed or not email_allowed:
+        return 429, {
+            "success": False,
+            "message": ip_message if not ip_allowed else email_message,
+            "retry_after": ip_retry if not ip_allowed else email_retry,
+            "code": "rate_limit_exceeded",
+        }
+
+    user = User.objects.filter(email__iexact=data.email.strip()).first()
+    if user and not user.email_verified:
+        user.verification_token = uuid.uuid4()
+        user.last_verification_email_sent = timezone.now()
+        user.save(update_fields=["verification_token", "last_verification_email_sent"])
+        try:
+            send_verification_email(user)
+        except Exception:
+            logger.exception("Failed to resend verification email for user %s", user.id)
+
+    return 200, {
+        "success": True,
+        "message": "If an unverified account exists, a verification email has been sent.",
+    }
+
+
 # ============================================================================
 # 2FA Endpoints
 # ============================================================================
@@ -492,6 +527,14 @@ def verify_2fa(request: HttpRequest, data: Verify2FARequest) -> tuple[int, dict[
             }
 
         user = challenge.user
+
+        if not user.email_verified:
+            challenge.delete()
+            return 200, {
+                "success": False,
+                "code": "email_not_verified",
+                "message": "Verify your email address before signing in.",
+            }
 
         if data.is_recovery_code:
             # Verify recovery code
@@ -854,26 +897,7 @@ def forgot_password(
             auth_frontend_url = getattr(settings, "AUTH_FRONTEND_URL", settings.FRONTEND_URL)
             reset_url = f"{auth_frontend_url}/reset-password/{reset_token}"
 
-            send_mail(
-                subject="Reset your TechWiki password",
-                message=f"""
-Hi {user.first_name},
-
-Click the link below to reset your password:
-
-{reset_url}
-
-This link will expire in 1 hour.
-
-If you didn't request a password reset, you can ignore this email.
-
-Thanks,
-The TechWiki Team
-                """.strip(),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=True,
-            )
+            send_password_reset_email(user, reset_url)
 
         # Always return success to prevent email enumeration
         return 200, {
@@ -1052,6 +1076,17 @@ def complete_discoverable_auth(
             }
 
         user = passkey.user
+
+        if not user.is_active or not user.email_verified:
+            return 200, {
+                "success": False,
+                "code": "email_not_verified" if not user.email_verified else "account_inactive",
+                "message": (
+                    "Verify your email address before signing in."
+                    if not user.email_verified
+                    else "This account has been deactivated."
+                ),
+            }
 
         # Get session key for challenge lookup
         session_key = request.session.session_key

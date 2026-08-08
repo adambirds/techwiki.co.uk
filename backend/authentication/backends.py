@@ -22,7 +22,15 @@ class EmailBackend(ModelBackend):
             return None
         else:
             assert password is not None
-            if user.check_password(password) and self.user_can_authenticate(user):
+            if (
+                user.check_password(password)
+                and user.email_verified
+                and self.user_can_authenticate(user)
+            ):
                 return user
             else:
                 return None
+
+    def user_can_authenticate(self, user: Any) -> bool:
+        """Reject inactive and unverified users, including existing sessions."""
+        return bool(getattr(user, "email_verified", False) and super().user_can_authenticate(user))

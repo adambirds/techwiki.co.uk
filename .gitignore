@@ -206,3 +206,9 @@ test-svg/
 **/*.tsbuildinfo
 
 .ruff_cache/
+# Local authentication certificates and private keys
+*.key
+*.pem
+*.pfx
+*.p12
+*.crt

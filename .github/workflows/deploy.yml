@@ -42,8 +42,8 @@ jobs:
                     --extra-vars "techwiki_db_name=${{ secrets.techwiki_DB_NAME }}" \
                     --extra-vars "techwiki_db_user=${{ secrets.techwiki_DB_USER }}" \
                     --extra-vars "techwiki_db_password=${{ secrets.techwiki_DB_PASSWORD }}" \
-                    --extra-vars "techwiki_photo_upload_password=${{ secrets.techwiki_PHOTO_UPLOAD_PASSWORD }}" \
-                    --extra-vars "techwiki_onedrive_client_id=${{ secrets.techwiki_ONEDRIVE_CLIENT_ID }}" \
-                    --extra-vars "techwiki_onedrive_client_secret=${{ secrets.techwiki_ONEDRIVE_CLIENT_SECRET }}" \
-                    --extra-vars "techwiki_onedrive_tenant_id=${{ secrets.techwiki_ONEDRIVE_TENANT_ID }}" \
-                    --extra-vars "techwiki_onedrive_drive_id=${{ secrets.techwiki_ONEDRIVE_DRIVE_ID }}"
+                    --extra-vars "techwiki_microsoft_graph_tenant_id=${{ secrets.techwiki_MICROSOFT_GRAPH_TENANT_ID }}" \
+                    --extra-vars "techwiki_microsoft_graph_client_id=${{ secrets.techwiki_MICROSOFT_GRAPH_CLIENT_ID }}" \
+                    --extra-vars "techwiki_microsoft_graph_sender_email=${{ secrets.techwiki_MICROSOFT_GRAPH_SENDER_EMAIL }}" \
+                    --extra-vars "techwiki_microsoft_graph_certificate_base64=${{ secrets.techwiki_MICROSOFT_GRAPH_CERTIFICATE_BASE64 }}" \
+                    --extra-vars "techwiki_microsoft_private_key_base64=${{ secrets.techwiki_MICROSOFT_PRIVATE_KEY_BASE64 }}" \

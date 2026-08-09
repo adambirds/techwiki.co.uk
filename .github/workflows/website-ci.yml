@@ -11,6 +11,7 @@ on:
             - "tools/**"
             - "pnpm-lock.yaml"
             - "package.json"
+            - "README.md"
     pull_request:
         paths:
             - "website/**"
@@ -19,6 +20,7 @@ on:
             - "tools/**"
             - "pnpm-lock.yaml"
             - "package.json"
+            - "README.md"
     workflow_dispatch:
 
 concurrency:

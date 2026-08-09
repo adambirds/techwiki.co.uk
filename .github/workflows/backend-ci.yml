@@ -12,6 +12,7 @@ on:
             - "package.json"
             - "pnpm-lock.yaml"
             - ".github/workflows/backend-ci.yml"
+            - "README.md"
     pull_request:
         paths:
             - "backend/**"
@@ -21,6 +22,7 @@ on:
             - "package.json"
             - "pnpm-lock.yaml"
             - ".github/workflows/backend-ci.yml"
+            - "README.md"
     workflow_dispatch:
 
 concurrency:

@@ -30,7 +30,9 @@ class TokenizerState:
 
 
 class Token:
-    def __init__(self, kind: str, s: str, tag: str, line: int, col: int, line_span: int) -> None:
+    def __init__(  # noqa: PLR0917
+        self, kind: str, s: str, tag: str, line: int, col: int, line_span: int
+    ) -> None:
         self.kind = kind
         self.s = s
         self.tag = tag
@@ -665,7 +667,7 @@ def get_handlebars_triple_stache_tag(text: str, i: int) -> str:
 
 def get_spaces(text: str, i: int) -> str:
     s = ""
-    while i < len(text) and text[i] in " ":
+    while i < len(text) and text[i] == " ":
         s += text[i]
         i += 1
     return s
@@ -673,7 +675,7 @@ def get_spaces(text: str, i: int) -> str:
 
 def get_code(text: str, i: int) -> str:
     s = ""
-    while i < len(text) and text[i] not in "<":
+    while i < len(text) and text[i] != "<":
         s += text[i]
         i += 1
     return s

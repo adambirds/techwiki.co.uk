@@ -230,7 +230,7 @@ def get_category(request: HttpRequest, slug: str) -> tuple[int, dict[str, Any]]:
 
 
 @wiki_router.post("/admin/categories", response={200: dict})
-def create_category(
+def create_category(  # noqa: PLR0917
     request: HttpRequest,
     name: str = Form[str](""),
     slug: str = Form[str](""),
@@ -256,7 +256,7 @@ def create_category(
 
         category = Category.objects.create(
             name=name,
-            slug=slug if slug else slugify(name),
+            slug=slug or slugify(name),
             description=description or "",
             icon=icon or "",
             parent=parent,
@@ -280,7 +280,7 @@ def create_category(
 
 
 @wiki_router.put("/admin/categories/{category_id}", response={200: dict})
-def update_category(
+def update_category(  # noqa: PLR0917
     request: HttpRequest,
     category_id: str,
     name: str = Form[str](""),
@@ -308,7 +308,7 @@ def update_category(
                 return 200, {"success": False, "message": "Parent category not found"}
 
         category.name = name
-        category.slug = slug if slug else slugify(name)
+        category.slug = slug or slugify(name)
         category.description = description or ""
         category.icon = icon or ""
         category.parent = parent
@@ -425,7 +425,7 @@ def create_tag(request: HttpRequest, data: TagCreateRequest) -> tuple[int, dict[
 
 
 @wiki_router.get("/articles", response={200: dict})
-def list_articles(
+def list_articles(  # noqa: PLR0917
     request: HttpRequest,
     page: int = 1,
     per_page: int = 20,
@@ -669,7 +669,7 @@ def update_article(
             if data.article_type is not None:
                 article.article_type = data.article_type
             if data.category_id is not None:
-                article.category_id = data.category_id if data.category_id else None
+                article.category_id = data.category_id or None
             if data.meta_title is not None:
                 article.meta_title = data.meta_title
             if data.meta_description is not None:
@@ -732,7 +732,7 @@ def delete_article(request: HttpRequest, article_id: str) -> tuple[int, dict[str
 
 
 @wiki_router.get("/search", response={200: dict})
-def search_articles(
+def search_articles(  # noqa: PLR0917
     request: HttpRequest,
     q: str,
     category: str | None = None,
@@ -1081,7 +1081,7 @@ def get_wiki_profile(request: HttpRequest) -> tuple[int, dict[str, Any]]:
 
 
 @wiki_router.put("/me", response={200: dict})
-def update_wiki_profile(
+def update_wiki_profile(  # noqa: PLR0917
     request: HttpRequest,
     bio: str = Form[str](""),
     website: str = Form[str](""),

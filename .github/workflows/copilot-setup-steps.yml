@@ -83,6 +83,7 @@ jobs:
                   cache-dependency-path: |
                       pnpm-lock.yaml
                       website/pnpm-lock.yaml
+                      auth-frontend/pnpm-lock.yaml
 
             - name: Install root Node dependencies
               if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
@@ -93,10 +94,16 @@ jobs:
               working-directory: website
               run: pnpm install --frozen-lockfile
 
+            - name: Install auth-frontend Node dependencies
+              if: ${{ hashFiles('auth-frontend/pnpm-lock.yaml') != '' }}
+              working-directory: auth-frontend
+              run: pnpm install --frozen-lockfile
+
             - name: Add node bin paths to PATH
               run: |
                   echo "$GITHUB_WORKSPACE/node_modules/.bin" >> $GITHUB_PATH
                   echo "$GITHUB_WORKSPACE/website/node_modules/.bin" >> $GITHUB_PATH
+                  echo "$GITHUB_WORKSPACE/auth-frontend/node_modules/.bin" >> $GITHUB_PATH
 
             # --- Tooling used by your scripts ---
             - name: Install ShellCheck and shfmt

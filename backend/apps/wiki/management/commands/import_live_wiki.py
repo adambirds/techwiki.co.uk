@@ -72,7 +72,7 @@ def infer_categories(title: str) -> list[str]:
                 break  # Don't add the same category multiple times
 
     # Return unique categories, or 'general' if none matched
-    return matched_categories if matched_categories else ["general"]
+    return matched_categories or ["general"]
 
 
 def infer_category(title: str) -> str:
@@ -264,7 +264,7 @@ class Command(BaseCommand):
                 continue
 
             if dry_run:
-                inferred_cat = default_category if default_category else infer_category(title)
+                inferred_cat = default_category or infer_category(title)
                 self.stdout.write(
                     self.style.SUCCESS(f"  Would import: {title} -> [{inferred_cat}]")
                 )

@@ -2,12 +2,10 @@
 
 import json
 
-from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
 from apps.wiki.models import UserRole, WikiUserProfile
-
-User = get_user_model()
+from authentication.models import User
 
 
 class AdminApiTestCase(TestCase):

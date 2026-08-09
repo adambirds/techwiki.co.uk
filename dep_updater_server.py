@@ -28,6 +28,7 @@ import json
 import re
 import subprocess
 from pathlib import Path
+from typing import Any
 
 import requests
 from fastmcp import FastMCP
@@ -39,8 +40,9 @@ mcp = FastMCP("dependency-updater")
 # Discovery
 # ---------------------------------------------------------------------------
 
+
 @mcp.tool()
-def scan_monorepo(root_path: str) -> dict:
+def scan_monorepo(root_path: str) -> dict[str, Any]:
     """Find all package.json and pip-compile .in files under a monorepo root.
 
     Skips node_modules and .git directories. Returns file paths grouped by
@@ -66,6 +68,7 @@ def scan_monorepo(root_path: str) -> dict:
 # Version checking — the read-only, always-safe half
 # ---------------------------------------------------------------------------
 
+
 def _get_latest_npm_version(package: str) -> str | None:
     resp = requests.get(f"https://registry.npmjs.org/{package}/latest", timeout=10)
     return resp.json().get("version") if resp.ok else None
@@ -79,15 +82,19 @@ def _get_latest_pypi_version(package: str) -> str | None:
 def _is_major_bump(current: str, latest: str) -> bool:
     """True if the first version component differs (semver-style major bump)."""
     try:
-        current_major = re.match(r"\d+", current.lstrip("^~=v")).group()
-        latest_major = re.match(r"\d+", latest.lstrip("^~=v")).group()
+        current_match = re.match(r"\d+", current.lstrip("^~=v"))
+        latest_match = re.match(r"\d+", latest.lstrip("^~=v"))
+        if current_match is None or latest_match is None:
+            return True
+        current_major = current_match.group()
+        latest_major = latest_match.group()
         return current_major != latest_major
     except (AttributeError, IndexError):
         return True  # if we can't tell, treat it as risky and flag it
 
 
 @mcp.tool()
-def check_npm_outdated(package_json_path: str) -> dict:
+def check_npm_outdated(package_json_path: str) -> dict[str, Any]:
     """Check a package.json's dependencies against the latest npm versions.
 
     Returns two lists: safe_updates (patch/minor, fine to apply automatically)
@@ -95,7 +102,8 @@ def check_npm_outdated(package_json_path: str) -> dict:
     never applied without explicit confirmation).
     """
     data = json.loads(Path(package_json_path).read_text())
-    safe, major = [], []
+    safe: list[dict[str, str]] = []
+    major: list[dict[str, str]] = []
 
     for section in ("dependencies", "devDependencies"):
         for pkg, current in data.get(section, {}).items():
@@ -109,17 +117,18 @@ def check_npm_outdated(package_json_path: str) -> dict:
 
 
 @mcp.tool()
-def check_python_outdated(requirements_in_path: str) -> dict:
+def check_python_outdated(requirements_in_path: str) -> dict[str, Any]:
     """Check a pip-compile .in file's pins against the latest PyPI versions.
 
     Same safe/major split and same rule: major bumps are never silently applied.
     """
     lines = Path(requirements_in_path).read_text().splitlines()
-    safe, major = [], []
+    safe: list[dict[str, str]] = []
+    major: list[dict[str, str]] = []
 
     for line in lines:
         line = line.strip()
-        if not line or line.startswith("#") or line.startswith("-"):
+        if not line or line.startswith(("#", "-")):
             continue
         match = re.match(r"^([A-Za-z0-9_.\-]+)\s*([=<>~!].*)?$", line)
         if not match:
@@ -137,6 +146,7 @@ def check_python_outdated(requirements_in_path: str) -> dict:
 # ---------------------------------------------------------------------------
 # Applying updates — write access, so this is where the caution matters most
 # ---------------------------------------------------------------------------
+
 
 @mcp.tool()
 def apply_npm_updates(package_json_path: str, packages: list[str]) -> str:
@@ -157,7 +167,9 @@ def apply_npm_updates(package_json_path: str, packages: list[str]) -> str:
         result = subprocess.run(
             ["npm", "install", f"{pkg}@{latest}", "--save-exact"],
             cwd=Path(package_json_path).parent,
-            capture_output=True, text=True, check=False,
+            capture_output=True,
+            text=True,
+            check=False,
         )
         if result.returncode != 0:
             # Surface the real npm error (e.g. ERESOLVE conflict details)
@@ -208,7 +220,9 @@ def apply_python_updates(repo_root: str, in_file_relative_path: str, packages: l
     result = subprocess.run(
         [str(script_path)],
         cwd=root,
-        capture_output=True, text=True, check=False,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     if result.returncode != 0:
         return (

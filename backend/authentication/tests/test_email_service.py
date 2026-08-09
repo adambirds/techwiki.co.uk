@@ -3,6 +3,7 @@
 import base64
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, override_settings
@@ -28,7 +29,7 @@ class GraphEmailServiceTestCase(SimpleTestCase):
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
 
-    def settings(self) -> object:
+    def graph_settings(self) -> Any:
         return override_settings(
             MICROSOFT_GRAPH_TENANT_ID="tenant-id",
             MICROSOFT_GRAPH_CLIENT_ID="client-id",
@@ -52,7 +53,7 @@ class GraphEmailServiceTestCase(SimpleTestCase):
         client.acquire_token_for_client.return_value = {"access_token": "token"}
         mock_post.return_value.status_code = 202
 
-        with self.settings():
+        with self.graph_settings():
             send_graph_email(
                 to_email="person@example.com",
                 subject="Test subject",
@@ -93,7 +94,7 @@ class GraphEmailServiceTestCase(SimpleTestCase):
         mock_post.return_value.status_code = 202
 
         with (
-            self.settings(),
+            self.graph_settings(),
             override_settings(
                 MICROSOFT_GRAPH_PRIVATE_KEY_BASE64=base64.b64encode(private_key.encode()).decode(),
                 MICROSOFT_GRAPH_CERTIFICATE_BASE64=base64.b64encode(certificate.encode()).decode(),
@@ -119,7 +120,10 @@ class GraphEmailServiceTestCase(SimpleTestCase):
             "error_description": "Certificate rejected",
         }
 
-        with self.settings(), self.assertRaisesRegex(EmailDeliveryError, "Certificate rejected"):
+        with (
+            self.graph_settings(),
+            self.assertRaisesRegex(EmailDeliveryError, "Certificate rejected"),
+        ):
             send_graph_email(
                 to_email="person@example.com",
                 subject="Test",
@@ -140,7 +144,7 @@ class GraphEmailServiceTestCase(SimpleTestCase):
         mock_post.return_value.status_code = 403
         mock_post.return_value.headers = {"request-id": "graph-request-id"}
 
-        with self.settings(), self.assertRaisesRegex(EmailDeliveryError, "status 403"):
+        with self.graph_settings(), self.assertRaisesRegex(EmailDeliveryError, "status 403"):
             send_graph_email(
                 to_email="person@example.com",
                 subject="Test",

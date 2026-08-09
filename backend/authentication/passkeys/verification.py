@@ -290,7 +290,7 @@ def verify_registration(
         raise VerificationError(f"Registration verification failed: {e!s}") from e
 
 
-def verify_authentication(
+def verify_authentication(  # noqa: PLR0917
     credential: dict[str, Any],
     expected_challenge: bytes,
     stored_public_key: bytes,

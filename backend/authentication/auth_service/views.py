@@ -644,7 +644,7 @@ def begin_2fa_setup(request: HttpRequest) -> tuple[int, dict[str, Any]]:
         secret = base64.b32encode(secrets.token_bytes(20)).decode("utf-8")
 
         # Create or update TOTP method (unverified)
-        totp_method, _ = TwoFactorMethod.objects.update_or_create(
+        _totp_method, _ = TwoFactorMethod.objects.update_or_create(
             user=request.user,
             method_type="totp",
             defaults={
@@ -1222,7 +1222,7 @@ def begin_passkey_registration(
             user_email=user.email,
             user_name=f"{user.first_name} {user.last_name}",
             challenge=challenge,
-            exclude_credentials=exclude_credentials if exclude_credentials else None,
+            exclude_credentials=exclude_credentials or None,
         )
 
         # Ensure resident key is required for discoverable credentials

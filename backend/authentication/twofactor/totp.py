@@ -96,7 +96,7 @@ def generate_totp(
     return _hotp(secret_bytes, counter, digits)
 
 
-def verify_totp(
+def verify_totp(  # noqa: PLR0917
     secret: str,
     code: str,
     time_step: int = 30,
@@ -136,7 +136,7 @@ def verify_totp(
     return False
 
 
-def generate_totp_uri(
+def generate_totp_uri(  # noqa: PLR0917
     secret: str,
     account_name: str,
     issuer: str = "TechWiki",

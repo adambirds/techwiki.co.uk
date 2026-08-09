@@ -46,7 +46,9 @@ def serialize_user(user: Any) -> dict[str, Any]:
     role = (
         UserRole.ADMIN
         if user.is_staff or user.is_superuser
-        else profile.role if profile else UserRole.READER
+        else profile.role
+        if profile
+        else UserRole.READER
     )
     return {
         "id": str(user.id),
@@ -122,7 +124,7 @@ def admin_overview(request: HttpRequest) -> dict[str, Any]:
 
 
 @router.get("/users")
-def list_admin_users(
+def list_admin_users(  # noqa: PLR0917
     request: HttpRequest,
     search: str = "",
     status: str = "all",

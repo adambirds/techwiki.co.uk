@@ -128,7 +128,7 @@ class SetupTotpTestCase(TestCase):
             is_verified=False,
         )
 
-        new_secret, uri = setup_totp(self.user)
+        new_secret, _uri = setup_totp(self.user)
 
         self.assertNotEqual(old_secret, new_secret)
         methods = TwoFactorMethod.objects.filter(user=self.user)
@@ -239,7 +239,7 @@ class Verify2FACodeTestCase(TestCase):
         """Test verifying an invalid recovery code."""
         generate_recovery_codes(self.user)
 
-        is_valid, method_used = verify_2fa_code(self.user, "XXXX-XXXX-XXXX")
+        is_valid, _method_used = verify_2fa_code(self.user, "XXXX-XXXX-XXXX")
 
         self.assertFalse(is_valid)
 

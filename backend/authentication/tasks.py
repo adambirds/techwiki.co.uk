@@ -1,10 +1,10 @@
 import logging
 from uuid import UUID
 
+from apps.ebay.clients.discord import DiscordWebhook
 from celery import shared_task
 from django.conf import settings
 
-from apps.ebay.clients.discord import DiscordWebhook
 from authentication.email_service import send_graph_email
 
 logger = logging.getLogger(__name__)

@@ -57,8 +57,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
             return [...staticPages, ...categoryPages, ...articlePages];
         }
-    } catch (error) {
-        console.error("Failed to fetch sitemap data:", error);
+    } catch {
+        // The content API may be unavailable during a standalone frontend build.
+        // Static routes still produce a valid sitemap in that case.
     }
 
     return staticPages;

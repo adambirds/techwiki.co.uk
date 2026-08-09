@@ -5,7 +5,14 @@ import { searchArticles } from "@/lib/wiki/api";
 import type { ArticleSummary, Category } from "@/lib/wiki/types";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import {
+    Suspense,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+    useTransition,
+} from "react";
 import { ArticleCard } from "./ArticleCard";
 
 interface SearchBoxProps {
@@ -14,7 +21,7 @@ interface SearchBoxProps {
     initialQuery?: string;
 }
 
-export function SearchBox({ className = "", initialQuery }: SearchBoxProps) {
+function SearchBoxInner({ className = "", initialQuery }: SearchBoxProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const inputRef = useRef<HTMLInputElement>(null);
@@ -66,6 +73,14 @@ export function SearchBox({ className = "", initialQuery }: SearchBoxProps) {
                 />
             </div>
         </form>
+    );
+}
+
+export function SearchBox(props: SearchBoxProps) {
+    return (
+        <Suspense fallback={null}>
+            <SearchBoxInner {...props} />
+        </Suspense>
     );
 }
 

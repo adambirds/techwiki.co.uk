@@ -5,6 +5,7 @@ export {
     InArticleAd,
     SidebarAd,
 } from "./AdSense";
+export { ArticleAd, SiteBannerAd, SiteSidebarAd } from "./AdPlacements";
 export { GoogleAnalytics, analytics } from "./GoogleAnalytics";
 export {
     internalAnalytics,

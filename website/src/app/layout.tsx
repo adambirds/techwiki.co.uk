@@ -4,8 +4,13 @@ import { GoogleAdSenseScript } from "@/lib/analytics/AdSense";
 import { GoogleAnalytics } from "@/lib/analytics/GoogleAnalytics";
 import "./globals.css";
 
+const ADSENSE_CLIENT_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+
 export const metadata: Metadata = {
     title: "Tech Wiki",
+    other: ADSENSE_CLIENT_ID
+        ? { "google-adsense-account": ADSENSE_CLIENT_ID }
+        : undefined,
 };
 
 export default async function RootLayout({

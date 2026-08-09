@@ -23,7 +23,13 @@ function GoogleAnalyticsInner() {
     const searchParams = useSearchParams();
 
     useEffect(() => {
-        if (!GA_MEASUREMENT_ID || typeof window === "undefined") return;
+        if (
+            !GA_MEASUREMENT_ID ||
+            typeof window === "undefined" ||
+            typeof window.gtag !== "function"
+        ) {
+            return;
+        }
 
         // Track page views
         const url =
@@ -55,7 +61,7 @@ export function GoogleAnalytics() {
                     gtag('js', new Date());
                     gtag('config', '${GA_MEASUREMENT_ID}', {
                         page_path: window.location.pathname,
-                        send_page_view: true
+                        send_page_view: false
                     });
                 `}
             </Script>

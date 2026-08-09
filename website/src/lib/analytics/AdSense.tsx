@@ -53,7 +53,7 @@ export function AdUnit({
     const isLoaded = useRef(false);
 
     useEffect(() => {
-        if (!ADSENSE_CLIENT_ID || isLoaded.current) return;
+        if (!ADSENSE_CLIENT_ID || !slot || isLoaded.current) return;
 
         try {
             // Push ad to adsbygoogle
@@ -62,9 +62,9 @@ export function AdUnit({
         } catch (error) {
             console.error("AdSense error:", error);
         }
-    }, []);
+    }, [slot]);
 
-    if (!ADSENSE_CLIENT_ID) {
+    if (!ADSENSE_CLIENT_ID || !slot) {
         return null;
     }
 
@@ -80,6 +80,7 @@ export function AdUnit({
             data-ad-slot={slot}
             data-ad-format={format}
             data-full-width-responsive={responsive ? "true" : "false"}
+            aria-label="Advertisement"
         />
     );
 }

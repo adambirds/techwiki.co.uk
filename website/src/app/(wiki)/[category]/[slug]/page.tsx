@@ -1,6 +1,7 @@
 import { FloatingEditButton } from "@/components/wiki/ArticleActions";
 import { ArticleActionsBar } from "@/components/wiki/ArticleActionsBar";
 import { MarkdownRenderer } from "@/components/wiki/MarkdownRenderer";
+import { ArticleAd } from "@/lib/analytics";
 import { getArticleByPath } from "@/lib/wiki/api";
 import {
     SiBluesky,
@@ -248,6 +249,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             {/* Article content */}
             <div className="mb-12">
                 <MarkdownRenderer html={article.rendered_html} />
+                <ArticleAd />
             </div>
 
             {/* Article footer */}

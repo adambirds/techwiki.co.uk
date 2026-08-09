@@ -160,6 +160,12 @@ jobs:
               working-directory: website
               run: pnpm run build
               timeout-minutes: 5
+              env:
+                  NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+                  NEXT_PUBLIC_ADSENSE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_ADSENSE_CLIENT_ID }}
+                  NEXT_PUBLIC_ADSENSE_BANNER_SLOT: ${{ vars.NEXT_PUBLIC_ADSENSE_BANNER_SLOT }}
+                  NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT: ${{ vars.NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT }}
+                  NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT: ${{ vars.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT }}
 
             # Upload bundle analysis to Codecov
             # https://docs.codecov.com/docs/javascript-bundle-analysis
@@ -195,12 +201,22 @@ jobs:
             - name: Generate .env for production
               run: |
                   {
-                    echo "NEXT_PUBLIC_GTM_ID=${NEXT_PUBLIC_GTM_ID}";
+                    echo "NEXT_PUBLIC_GA_MEASUREMENT_ID=${NEXT_PUBLIC_GA_MEASUREMENT_ID}";
+                    echo "NEXT_PUBLIC_ADSENSE_CLIENT_ID=${NEXT_PUBLIC_ADSENSE_CLIENT_ID}";
+                    echo "NEXT_PUBLIC_ADSENSE_BANNER_SLOT=${NEXT_PUBLIC_ADSENSE_BANNER_SLOT}";
+                    echo "NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT=${NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT}";
+                    echo "NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT=${NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT}";
                     echo "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}";
+                    echo "NEXT_PUBLIC_AUTH_URL=${NEXT_PUBLIC_AUTH_URL}";
                   } > ./website/.ci.env
               env:
-                  NEXT_PUBLIC_GTM_ID: ${{ secrets.NEXT_PUBLIC_GTM_ID }}
+                  NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+                  NEXT_PUBLIC_ADSENSE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_ADSENSE_CLIENT_ID }}
+                  NEXT_PUBLIC_ADSENSE_BANNER_SLOT: ${{ vars.NEXT_PUBLIC_ADSENSE_BANNER_SLOT }}
+                  NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT: ${{ vars.NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT }}
+                  NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT: ${{ vars.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT }}
                   NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+                  NEXT_PUBLIC_AUTH_URL: ${{ secrets.NEXT_PUBLIC_AUTH_URL }}
 
             - name: Log in to DigitalOcean Container Registry
               run: echo "${{ secrets.DO_REGISTRY_ACCESS_TOKEN }}" | docker login -u ${{ secrets.DO_REGISTRY_USERNAME }} --password-stdin registry.digitalocean.com

@@ -129,6 +129,30 @@ pnpm --dir auth-frontend dev
 
 Visit [localhost:3000](http://localhost:3000) for the wiki and [localhost:5173](http://localhost:5173) for authentication.
 
+### Analytics and advertising
+
+Google Analytics and AdSense are optional. Add these public values to
+`website/.env.local` for local testing and as GitHub Actions repository
+variables for production:
+
+```dotenv
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_ADSENSE_CLIENT_ID=ca-pub-0000000000000000
+NEXT_PUBLIC_ADSENSE_BANNER_SLOT=0000000000
+NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT=0000000000
+NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT=0000000000
+```
+
+The client ID enables the global AdSense script, account metadata, and
+`/ads.txt`. Each slot variable independently enables its corresponding ad
+placement.
+
+These IDs are public and should be GitHub repository **variables**, not
+secrets. The website workflow embeds them in the production Next.js build.
+
+Before serving ads in the EEA, UK, or Switzerland, configure a Google-certified
+consent management platform in AdSense under **Privacy & messaging**.
+
 ## Common commands
 
 | Command                            | Description                                              |

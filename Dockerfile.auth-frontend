@@ -5,7 +5,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-COPY ./auth-frontend/package.json ./auth-frontend/pnpm-lock.yaml ./
+COPY ./auth-frontend/package.json ./auth-frontend/pnpm-lock.yaml ./auth-frontend/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY ./auth-frontend .

@@ -8,6 +8,8 @@ The source code behind [techwiki.co.uk](https://techwiki.co.uk) — a community-
 
 TechWiki combines a server-rendered public website, a Django API, and a dedicated authentication application. It supports structured publishing workflows, contributor profiles, moderation, analytics, passkeys, and two-factor authentication.
 
+It replaces MediaWiki with a modern, performant, and secure platform for technical content.
+
 ## Highlights
 
 - Articles, tutorials, blogs, categories, tags, search, and author pages

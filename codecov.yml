@@ -26,6 +26,14 @@ coverage:
                     - website
                 paths:
                     - website/
+            auth-frontend:
+                target: auto
+                threshold: 1%
+                base: auto
+                flags:
+                    - auth-frontend
+                paths:
+                    - auth-frontend/
         patch:
             default:
                 target: auto
@@ -54,6 +62,12 @@ component_management:
               - website/**
           flag_regexes:
               - website.*
+        - component_id: auth-frontend
+          name: Auth Frontend (React)
+          paths:
+              - auth-frontend/**
+          flag_regexes:
+              - auth-frontend.*
 
 # Flag definitions for different parts of the monorepo
 # https://docs.codecov.com/docs/flags
@@ -74,6 +88,14 @@ flag_management:
           carryforward: true
           paths:
               - website/
+          statuses:
+              - type: project
+                target: auto
+                threshold: 1%
+        - name: auth-frontend
+          carryforward: true
+          paths:
+              - auth-frontend/
           statuses:
               - type: project
                 target: auto

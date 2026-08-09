@@ -152,7 +152,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - name: Trivy FS Scan
-              uses: aquasecurity/trivy-action@master
+              uses: aquasecurity/trivy-action@0.36.0
               with:
                   scan-type: fs
                   severity: HIGH,CRITICAL
@@ -194,7 +194,7 @@ jobs:
                     - backend
         steps:
             - name: Scan registry.digitalocean.com/adbsoftwaresolutions/techwiki-${{ matrix.image }}:latest
-              uses: aquasecurity/trivy-action@0.29.0
+              uses: aquasecurity/trivy-action@0.36.0
               with:
                   scan-type: image
                   image-ref: registry.digitalocean.com/adbsoftwaresolutions/techwiki-${{ matrix.image }}:latest

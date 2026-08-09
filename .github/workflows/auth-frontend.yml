@@ -34,7 +34,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - name: Run Trivy FS Scan
-              uses: aquasecurity/trivy-action@master
+              uses: aquasecurity/trivy-action@0.36.0
               with:
                   scan-type: fs
                   severity: HIGH,CRITICAL
@@ -234,7 +234,7 @@ jobs:
                     echo "tag_suffix=latest" >> $GITHUB_OUTPUT
                   fi
             - name: Run Trivy Docker Image Scan
-              uses: aquasecurity/trivy-action@0.29.0
+              uses: aquasecurity/trivy-action@0.36.0
               with:
                   scan-type: image
                   image-ref: registry.digitalocean.com/adbsoftwaresolutions/techwiki-auth-frontend:${{ steps.meta.outputs.tag_suffix }}

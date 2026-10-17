@@ -129,10 +129,6 @@ export default function PrivacyPage() {
                             <p>
                                 <a href="mailto:enquiries@techwiki.co.uk">
                                     Send a privacy request
-                                </a>{" "}
-                                or visit the{" "}
-                                <a href="https://ico.org.uk/make-a-complaint/">
-                                    ICO complaints service
                                 </a>
                                 .
                             </p>
